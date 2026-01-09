@@ -3,14 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <title>電影列表</title>
+    <!-- CSS 引用 -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <style>
-        table { border-collapse: collapse; width: 100%; }
+        table { border-collapse: collapse; width: 100%; margin-top: 20px; }
         th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
-        img { width: 100px; height: 150px; object-fit: cover; }
-        .book-btn { padding: 4px 8px; border: none; border-radius: 4px; background-color: green; color: white; cursor: pointer; }
-        .disabled { color: gray; }
+        img.movie-poster { width: 100px; height: 150px; object-fit: cover; border-radius: 4px; border: 1px solid #ccc; }
+        button.book-btn, button.delete-btn, button.add-btn { 
+            padding: 4px 8px; border: none; border-radius: 4px; color: white; cursor: pointer; 
+        }
+        button.book-btn { background-color: green; }
+        button.delete-btn { background-color: red; }
+        button.add-btn { background-color: blue; margin-top: 10px; }
+        span.disabled { color: gray; }
         a { text-decoration: none; }
         hr { margin: 20px 0; }
+        form.inline { display: inline; } /* 讓刪除按鈕在同一行 */
     </style>
 </head>
 <body>
@@ -35,6 +43,16 @@
 
 <h1>電影列表</h1>
 
+{% if session.employee_id %}
+<h2>新增電影</h2>
+<form method="post" action="/manage_movies">
+    電影名稱：<input type="text" name="title" required>
+    放映時間：<input type="text" name="showtime" required>
+    縮圖檔名（放在 static/posters/）：<input type="text" name="poster_url">
+    <button type="submit" class="add-btn">新增</button>
+</form>
+{% endif %}
+
 <table>
     <thead>
         <tr>
@@ -50,19 +68,25 @@
             <td>{{ movie.title }}</td>
             <td>
                 {% if movie.poster_url %}
-                    <img src="{{ movie.poster_url }}" alt="{{ movie.title }}">
+                    <img class="movie-poster" src="{{ url_for('static', filename=movie.poster_url) }}" alt="{{ movie.title }}">
                 {% else %}
-                    <img src="https://via.placeholder.com/100x150?text=No+Image" alt="No Image">
+                    <img class="movie-poster" src="https://via.placeholder.com/100x150?text=No+Image" alt="No Image">
                 {% endif %}
             </td>
             <td>{{ movie.showtime }}</td>
             <td>
                 {% if session.username %}
-                    <form method="get" action="/book/{{ movie.id }}">
+                    <form method="get" action="/book/{{ movie.id }}" class="inline">
                         <button type="submit" class="book-btn">訂票</button>
                     </form>
                 {% else %}
                     <span class="disabled">請先登入</span>
+                {% endif %}
+
+                {% if session.employee_id %}
+                    <form method="post" action="/delete_movie/{{ movie.id }}" class="inline" onsubmit="return confirm('確定刪除這部電影嗎？');">
+                        <button type="submit" class="delete-btn">刪除</button>
+                    </form>
                 {% endif %}
             </td>
         </tr>

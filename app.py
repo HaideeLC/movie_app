@@ -16,27 +16,28 @@ app = Flask(__name__)
 app.secret_key = "super_secret_key"
 DATABASE = "database.db"
 
-# -------------------------
-# 資料庫工具
-# -------------------------
 def get_db():
     if "db" not in g:
         g.db = sqlite3.connect(DATABASE)
         g.db.row_factory = sqlite3.Row
     return g.db
 
+# 3️⃣ teardown
 @app.teardown_appcontext
 def close_db(error):
     db = g.pop("db", None)
     if db:
         db.close()
 
+
 # -------------------------
-# 初始化資料庫
+# 資料庫工具
 # -------------------------
 def init_db():
     db = sqlite3.connect(DATABASE)
+    db.row_factory = sqlite3.Row
 
+    # 員工表
     db.execute("""
         CREATE TABLE IF NOT EXISTS employees (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -44,16 +45,18 @@ def init_db():
             password TEXT NOT NULL
         )
     """)
-    # movies table
+
+    # 電影表
     db.execute("""
         CREATE TABLE IF NOT EXISTS movies (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             title TEXT NOT NULL,
-            showtime TEXT NOT NULL
+            showtime TEXT NOT NULL,
+            poster_url TEXT
         )
     """)
 
-    # bookings table
+    # 訂票表
     db.execute("""
         CREATE TABLE IF NOT EXISTS bookings (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -64,7 +67,7 @@ def init_db():
         )
     """)
 
-    # users table
+    # 使用者表
     db.execute("""
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -75,13 +78,20 @@ def init_db():
 
     # 預設電影資料
     if db.execute("SELECT COUNT(*) FROM movies").fetchone()[0] == 0:
-        db.execute("INSERT INTO movies (title, showtime) VALUES (?, ?)", ("Inception", "19:00"))
-        db.execute("INSERT INTO movies (title, showtime) VALUES (?, ?)", ("Interstellar", "21:00"))
+        db.execute(
+            "INSERT INTO movies (title, showtime, poster_url) VALUES (?, ?, ?)",
+            ("多哥", "19:00", "posters/多哥.png")
+        )
+        db.execute(
+            "INSERT INTO movies (title, showtime,poster_url) VALUES (?, ?,?)",
+            ("天劫倒數", "21:00","posters/天劫倒數.png")
+        )
 
     # 預設使用者
     if db.execute("SELECT COUNT(*) FROM users").fetchone()[0] == 0:
         db.execute("INSERT INTO users (username, password) VALUES (?, ?)", ("testuser", "1234"))
-    #預設使用者
+
+    # 預設員工
     if db.execute("SELECT COUNT(*) FROM employees").fetchone()[0] == 0:
         db.execute("INSERT INTO employees (username, password) VALUES (?, ?)", ("aa", "111"))
 

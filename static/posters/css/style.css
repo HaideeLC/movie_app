@@ -1,0 +1,23 @@
+/* 表格縮圖統一尺寸 */
+img.movie-poster {
+    width: 100px;       /* 寬度 */
+    height: 150px;      /* 高度 */
+    object-fit: cover;  /* 裁切圖片保持比例，不變形 */
+    border-radius: 4px; /* 可選：圓角 */
+    border: 1px solid #ccc; /* 可選：邊框 */
+}
+
+/* 訂票按鈕樣式 */
+button.book-btn {
+    padding: 4px 8px;
+    border: none;
+    border-radius: 4px;
+    background-color: green;
+    color: white;
+    cursor: pointer;
+}
+
+/* 禁用文字樣式 */
+span.disabled {
+    color: gray;
+}
