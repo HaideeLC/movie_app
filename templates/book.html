@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<body>
+<h1>訂票：{{ movie.title }}</h1>
+
+<form method="post">
+    姓名：
+    <input type="text" name="name" value="{{ session.username }}" readonly><br><br>
+    張數：
+    <input type="number" name="tickets" min="1" required><br><br>
+    <button type="submit">確認訂票</button>
+</form>
+</body>
+</html>

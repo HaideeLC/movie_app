@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>電影列表</title>
+    <style>
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+        img { width: 100px; }
+        button { padding: 4px 8px; border: none; border-radius: 4px; cursor: pointer; }
+        .book-btn { background-color: green; color: white; }
+    </style>
+</head>
+<body>
+
+<h1>電影列表</h1>
+
+<table>
+    <thead>
+        <tr>
+            <th>電影名稱</th>
+            <th>電影縮圖</th>
+            <th>放映時間</th>
+            <th>操作</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for m in movies %}
+        <tr>
+            <td>{{ m.title }}</td>
+            <td>
+                {% if m.poster_url %}
+                    <img src="{{ m.poster_url }}" alt="{{ m.title }}">
+                {% else %}
+                    <img src="https://via.placeholder.com/100x150?text=No+Image" alt="No Image">
+                {% endif %}
+            </td>
+            <td>{{ m.showtime }}</td>
+            <td>
+                <form method="get" action="/book/{{ m.id }}">
+                    <button class="book-btn">訂票</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+</body>
+</html>
