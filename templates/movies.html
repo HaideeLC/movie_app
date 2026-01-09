@@ -13,6 +13,7 @@
             padding: 4px 8px; border: none; border-radius: 4px; color: white; cursor: pointer; 
         }
         button.book-btn { background-color: green; }
+        button.book-btn[disabled] { background-color: gray; cursor: not-allowed; }
         button.delete-btn { background-color: red; }
         button.add-btn { background-color: blue; margin-top: 10px; }
         span.disabled { color: gray; }
@@ -43,6 +44,7 @@
 
 <h1>電影列表</h1>
 
+<!-- 員工新增電影 -->
 {% if session.employee_id %}
 <h2>新增電影</h2>
 <form method="post" action="/manage_movies">
@@ -60,7 +62,7 @@
             <th>電影縮圖</th>
             <th>放映時間</th>
             <th>座位剩餘數</th>
-            <th>購票</th>
+            <th>購票 / 操作</th>
         </tr>
     </thead>
     <tbody>
@@ -78,9 +80,15 @@
             <td>{{ movie.remaining_seats }}</td> 
             <td>
                 {% if session.username %}
-                    <form method="get" action="/book/{{ movie.id }}" class="inline">
-                        <button type="submit" class="book-btn">訂票</button>
-                    </form>
+                    {% if movie.remaining_seats > 0 %}
+                        <!-- 剩餘座位 > 0 → 可以訂票 -->
+                        <form method="get" action="/book/{{ movie.id }}" class="inline">
+                            <button type="submit" class="book-btn">訂票</button>
+                        </form>
+                    {% else %}
+                        <!-- 剩餘座位 0 → 已售完，按鈕不可按 -->
+                        <button class="book-btn" disabled>已售完</button>
+                    {% endif %}
                 {% else %}
                     <span class="disabled">請先登入</span>
                 {% endif %}
