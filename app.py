@@ -165,19 +165,40 @@ def movies():
     return render_template("movies.html", movies=movies)
 
 @app.route("/book/<int:movie_id>", methods=["GET", "POST"])
+@app.route("/book/<int:movie_id>", methods=["GET", "POST"])
 def book(movie_id):
     # 🚨 先檢查是否登入
     if "user_id" not in session:
         return redirect(url_for("login"))
 
     db = get_db()
-    movie = db.execute("SELECT * FROM movies WHERE id=?", (movie_id,)).fetchone()
+
+    # 取得電影資訊和剩餘座位
+    movie = db.execute("""
+        SELECT 
+            m.*,
+            m.total_seats,
+            IFNULL(SUM(b.tickets), 0) AS booked_seats,
+            (m.total_seats - IFNULL(SUM(b.tickets), 0)) AS remaining_seats
+        FROM movies m
+        LEFT JOIN bookings b ON m.id = b.movie_id
+        WHERE m.id = ?
+        GROUP BY m.id
+    """, (movie_id,)).fetchone()
+
+    if not movie:
+        return "電影不存在", 404
 
     if request.method == "POST":
         name = request.form["name"]
         tickets = int(request.form["tickets"])
         order_no = generate_unique_order_no(db)
 
+        # 🔹 檢查剩餘座位
+        if tickets > movie["remaining_seats"]:
+            return f"剩餘座位不足，剩餘 {movie['remaining_seats']} 席", 400
+
+        # 新增訂單
         db.execute("""
             INSERT INTO bookings (order_no, movie_id, customer_name, tickets)
             VALUES (?, ?, ?, ?)
@@ -186,6 +207,7 @@ def book(movie_id):
 
         return redirect(url_for("success", order_no=order_no))
 
+    # GET 顯示訂票頁
     return render_template("book.html", movie=movie)
 
 @app.route("/register", methods=["GET", "POST"])
