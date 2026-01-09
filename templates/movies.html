@@ -59,7 +59,8 @@
             <th>電影名稱</th>
             <th>電影縮圖</th>
             <th>放映時間</th>
-            <th>操作</th>
+            <th>座位剩餘數</th>
+            <th>購</th>
         </tr>
     </thead>
     <tbody>
@@ -74,6 +75,7 @@
                 {% endif %}
             </td>
             <td>{{ movie.showtime }}</td>
+            <td>{{ movie.remaining_seats }}</td> 
             <td>
                 {% if session.username %}
                     <form method="get" action="/book/{{ movie.id }}" class="inline">

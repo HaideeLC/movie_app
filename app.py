@@ -52,7 +52,8 @@ def init_db():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             title TEXT NOT NULL,
             showtime TEXT NOT NULL,
-            poster_url TEXT
+            poster_url TEXT,
+            total_seats INTEGER DEFAULT 100
         )
     """)
 
@@ -79,12 +80,12 @@ def init_db():
     # 預設電影資料
     if db.execute("SELECT COUNT(*) FROM movies").fetchone()[0] == 0:
         db.execute(
-            "INSERT INTO movies (title, showtime, poster_url) VALUES (?, ?, ?)",
-            ("多哥", "19:00", "posters/多哥.png")
+            "INSERT INTO movies (title, showtime, poster_url,total_seats) VALUES (?, ?, ?,?)",
+            ("多哥", "19:00", "posters/多哥.png",100)
         )
         db.execute(
-            "INSERT INTO movies (title, showtime,poster_url) VALUES (?, ?,?)",
-            ("天劫倒數", "21:00","posters/天劫倒數.png")
+            "INSERT INTO movies (title, showtime,poster_url,total_seats) VALUES (?, ?,?,?)",
+            ("天劫倒數", "21:00","posters/天劫倒數.png",150)
         )
 
     # 預設使用者
@@ -147,7 +148,20 @@ def logout():
 @app.route("/")
 def movies():
     db = get_db()
-    movies = db.execute("SELECT * FROM movies").fetchall()
+    movies = db.execute("""
+        SELECT 
+            m.id,
+            m.title,
+            m.showtime,
+            m.poster_url,
+            m.total_seats,
+            IFNULL(SUM(b.tickets), 0) as booked_seats,
+            (m.total_seats - IFNULL(SUM(b.tickets), 0)) as remaining_seats
+        FROM movies m
+        LEFT JOIN bookings b ON m.id = b.movie_id
+        GROUP BY m.id
+    """).fetchall()
+    
     return render_template("movies.html", movies=movies)
 
 @app.route("/book/<int:movie_id>", methods=["GET", "POST"])
