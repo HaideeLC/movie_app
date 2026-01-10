@@ -1,108 +1,221 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
     <title>電影列表</title>
-    <!-- CSS 引用 -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
     <style>
-        table { border-collapse: collapse; width: 100%; margin-top: 20px; }
-        th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
-        img.movie-poster { width: 100px; height: 150px; object-fit: cover; border-radius: 4px; border: 1px solid #ccc; }
-        button.book-btn, button.delete-btn, button.add-btn { 
-            padding: 4px 8px; border: none; border-radius: 4px; color: white; cursor: pointer; 
+        body {
+            margin: 0;
+            font-family: "Segoe UI", Arial, sans-serif;
+            background-color: #f4f6f8;
         }
-        button.book-btn { background-color: green; }
-        button.book-btn[disabled] { background-color: gray; cursor: not-allowed; }
-        button.delete-btn { background-color: red; }
-        button.add-btn { background-color: blue; margin-top: 10px; }
-        span.disabled { color: gray; }
-        a { text-decoration: none; }
-        hr { margin: 20px 0; }
-        form.inline { display: inline; } /* 讓刪除按鈕在同一行 */
+
+        /* ===== 導覽列 ===== */
+        .navbar {
+            background-color: #1f2937;
+            color: white;
+            padding: 12px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .navbar a {
+            color: #e5e7eb;
+            margin-left: 15px;
+            text-decoration: none;
+        }
+
+        .navbar a:hover {
+            color: white;
+            text-decoration: underline;
+        }
+
+        /* ===== 主內容 ===== */
+        .container {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+        }
+
+        /* ===== 新增電影（員工） ===== */
+        .add-movie {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+
+        .add-movie input {
+            margin-right: 10px;
+            padding: 6px;
+        }
+
+        /* ===== 電影卡片 ===== */
+        .movie-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 20px;
+        }
+
+        .movie-card {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+
+        .movie-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .movie-card img {
+            width: 100%;
+            height: 320px;
+            object-fit: cover;
+        }
+
+        .movie-card a img {
+            cursor: pointer;
+        }
+
+        .movie-card a img:hover {
+            opacity: 0.9;
+        }
+
+        .movie-content {
+            padding: 15px;
+            text-align: center;
+        }
+
+        .movie-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .movie-info {
+            font-size: 14px;
+            color: #555;
+            margin-bottom: 6px;
+        }
+
+        /* ===== 按鈕 ===== */
+        button {
+            border: none;
+            border-radius: 6px;
+            padding: 6px 12px;
+            color: white;
+            cursor: pointer;
+            margin: 3px;
+        }
+
+        .book-btn { background-color: #16a34a; }
+        .book-btn[disabled] { background-color: gray; cursor: not-allowed; }
+        .delete-btn { background-color: #dc2626; }
+        .add-btn { background-color: #2563eb; }
+
+        .disabled {
+            color: gray;
+            font-size: 14px;
+        }
+
+        form.inline {
+            display: inline;
+        }
     </style>
 </head>
+
 <body>
 
-<!-- 導覽列 -->
-{% if session.username %}
-<p>
-    你好，{{ session.username }} | 
-    <a href="/logout">登出</a> | 
-    <a href="/order">📄 查詢訂單</a>
-</p>
-{% else %}
-<p>
-    <a href="/login">登入</a> | 
-    <a href="/register">註冊</a> | 
-    <a href="/order">📄 查詢訂單</a> | 
-    <a href="/employee_login">員工登入</a>
-</p>
-{% endif %}
+<!-- ===== 導覽列 ===== -->
+<div class="navbar">
+    <div>🎬 電影訂票系統</div>
+    <div>
+        {% if session.username %}
+            你好，{{ session.username }}
+            <a href="/order">📄 訂單</a>
+            <a href="/logout">登出</a>
+        {% else %}
+            <a href="/login">登入</a>
+            <a href="/register">註冊</a>
+            <a href="/order">📄 查詢訂單</a>
+            <a href="/employee_login">員工登入</a>
+        {% endif %}
+    </div>
+</div>
 
-<hr>
+<div class="container">
+    <h1>電影列表</h1>
 
-<h1>電影列表</h1>
+    {% if session.employee_id %}
+    <div class="add-movie">
+        <h3>新增電影（員工）</h3>
+        <form method="post" action="/manage_movies">
+            <input type="text" name="title" placeholder="電影名稱" required>
+            <input type="text" name="showtime" placeholder="放映時間" required>
+            <input type="text" name="poster_url" placeholder="static/posters/xxx.jpg">
+            <button type="submit" class="add-btn">新增</button>
+        </form>
+    </div>
+    {% endif %}
 
-<!-- 員工新增電影 -->
-{% if session.employee_id %}
-<h2>新增電影</h2>
-<form method="post" action="/manage_movies">
-    電影名稱：<input type="text" name="title" required>
-    放映時間：<input type="text" name="showtime" required>
-    縮圖檔名（放在 static/posters/）：<input type="text" name="poster_url">
-    <button type="submit" class="add-btn">新增</button>
-</form>
-{% endif %}
-
-<table>
-    <thead>
-        <tr>
-            <th>電影名稱</th>
-            <th>電影縮圖</th>
-            <th>放映時間</th>
-            <th>座位剩餘數</th>
-            <th>購票 / 操作</th>
-        </tr>
-    </thead>
-    <tbody>
+    <div class="movie-grid">
         {% for movie in movies %}
-        <tr>
-            <td>{{ movie.title }}</td>
-            <td>
+        <div class="movie-card">
+
+            <!-- 🎬 電影圖片（可點擊進入訂票） -->
+            {% if session.username and movie.remaining_seats > 0 %}
+                <a href="/book/{{ movie.id }}">
+                    {% if movie.poster_url %}
+                        <img src="{{ url_for('static', filename=movie.poster_url) }}">
+                    {% else %}
+                        <img src="https://via.placeholder.com/300x400?text=No+Image">
+                    {% endif %}
+                </a>
+            {% else %}
                 {% if movie.poster_url %}
-                    <img class="movie-poster" src="{{ url_for('static', filename=movie.poster_url) }}" alt="{{ movie.title }}">
+                    <img src="{{ url_for('static', filename=movie.poster_url) }}">
                 {% else %}
-                    <img class="movie-poster" src="https://via.placeholder.com/100x150?text=No+Image" alt="No Image">
+                    <img src="https://via.placeholder.com/300x400?text=No+Image">
                 {% endif %}
-            </td>
-            <td>{{ movie.showtime }}</td>
-            <td>{{ movie.remaining_seats }}</td> 
-            <td>
+            {% endif %}
+
+            <div class="movie-content">
+                <div class="movie-title">{{ movie.title }}</div>
+                <div class="movie-info">🕒 {{ movie.showtime }}</div>
+                <div class="movie-info">🎟 剩餘 {{ movie.remaining_seats }} 位</div>
+
                 {% if session.username %}
                     {% if movie.remaining_seats > 0 %}
-                        <!-- 剩餘座位 > 0 → 可以訂票 -->
                         <form method="get" action="/book/{{ movie.id }}" class="inline">
-                            <button type="submit" class="book-btn">訂票</button>
+                            <button class="book-btn">訂票</button>
                         </form>
                     {% else %}
-                        <!-- 剩餘座位 0 → 已售完，按鈕不可按 -->
                         <button class="book-btn" disabled>已售完</button>
                     {% endif %}
                 {% else %}
-                    <span class="disabled">請先登入</span>
+                    <div class="disabled">請先登入</div>
                 {% endif %}
 
                 {% if session.employee_id %}
-                    <form method="post" action="/delete_movie/{{ movie.id }}" class="inline" onsubmit="return confirm('確定刪除這部電影嗎？');">
-                        <button type="submit" class="delete-btn">刪除</button>
+                    <form method="post" action="/delete_movie/{{ movie.id }}" class="inline"
+                          onsubmit="return confirm('確定刪除這部電影嗎？');">
+                        <button class="delete-btn">刪除</button>
                     </form>
                 {% endif %}
-            </td>
-        </tr>
+            </div>
+        </div>
         {% endfor %}
-    </tbody>
-</table>
+    </div>
+</div>
 
 </body>
 </html>

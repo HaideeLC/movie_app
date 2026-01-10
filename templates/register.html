@@ -1,18 +1,126 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>註冊新帳號</title>
+    <style>
+        /* ===== 全域樣式 ===== */
+        body {
+            margin: 0;
+            font-family: "Segoe UI", Arial, sans-serif;
+            background: linear-gradient(135deg, #1f2937, #111827);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #111;
+        }
+
+        /* ===== 註冊卡片 ===== */
+        .register-container {
+            background-color: #ffffff;
+            padding: 40px 30px;
+            border-radius: 12px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            width: 380px;
+            max-width: 90%;
+            text-align: center;
+        }
+
+        h1 {
+            margin-bottom: 30px;
+            font-size: 28px;
+            color: #111827;
+        }
+
+        /* ===== 表單樣式 ===== */
+        form {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            text-align: left;
+            font-weight: bold;
+            margin-bottom: 6px;
+            color: #374151;
+        }
+
+        input[type="text"],
+        input[type="password"] {
+            padding: 12px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            border: 1px solid #d1d5db;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input[type="text"]:focus,
+        input[type="password"]:focus {
+            border-color: #2563eb;
+        }
+
+        button {
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            background-color: #2563eb;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: #1e40af;
+        }
+
+        /* ===== 錯誤訊息 ===== */
+        .error {
+            color: #dc2626;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+
+        /* ===== 登入連結 ===== */
+        .login-link {
+            margin-top: 15px;
+            font-size: 14px;
+        }
+
+        .login-link a {
+            color: #2563eb;
+            text-decoration: none;
+        }
+
+        .login-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
 <body>
-<h1>註冊新帳號</h1>
 
-<form method="post">
-    姓名：<input type="text" name="username" required><br><br>
-    密碼：<input type="password" name="password" required><br><br>
-    <button type="submit">註冊</button>
-</form>
+<div class="register-container">
+    <h1>註冊新帳號</h1>
 
-<p>已經有帳號？<a href="/login">點此登入</a></p>
+    <form method="post">
+        <label>姓名</label>
+        <input type="text" name="username" required>
 
-{% if error %}
-<p style="color:red;">{{ error }}</p>
-{% endif %}
+        <label>密碼</label>
+        <input type="password" name="password" required>
+
+        <button type="submit">註冊</button>
+    </form>
+
+    {% if error %}
+    <p class="error">{{ error }}</p>
+    {% endif %}
+
+    <p class="login-link">已經有帳號？<a href="/login">點此登入</a></p>
+</div>
+
 </body>
 </html>

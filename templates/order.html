@@ -1,51 +1,173 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>訂單查詢</title>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: "Segoe UI", Arial, sans-serif;
+            background-color: #f4f6f8;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        h1 {
+            margin-bottom: 10px;
+        }
+
+        .info {
+            color: #555;
+            margin-bottom: 20px;
+        }
+
+        /* 查詢卡片 */
+        .search-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .search-card input {
+            padding: 8px;
+            width: 250px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+        }
+
+        .search-card button {
+            padding: 8px 14px;
+            border: none;
+            border-radius: 6px;
+            background-color: #2563eb;
+            color: white;
+            cursor: pointer;
+            margin-left: 5px;
+        }
+
+        /* 表格 */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        th {
+            background-color: #1f2937;
+            color: white;
+            padding: 12px;
+            font-size: 14px;
+        }
+
+        td {
+            padding: 10px;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+        }
+
+        tr:hover {
+            background-color: #f9fafb;
+        }
+
+        .delete-btn {
+            background-color: #dc2626;
+            color: white;
+            border: none;
+            padding: 6px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .delete-btn:hover {
+            background-color: #b91c1c;
+        }
+
+        .no-result {
+            color: #dc2626;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-top: 25px;
+            padding: 10px 16px;
+            background-color: #16a34a;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+        }
+
+        .back-link:hover {
+            background-color: #15803d;
+        }
+    </style>
+</head>
+
 <body>
-<h1>🔍 訂單查詢</h1>
 
-{% if user_name %}
-<p>使用者：{{ user_name }} (已登入，可查看所有訂單)</p>
-{% else %}
-<p>未登入，請輸入訂單號查詢您的訂單</p>
-{% endif %}
+<div class="container">
 
-<form method="post">
-    訂單編號（選填，可查單一訂單）：<input type="text" name="order_no">
-    <button type="submit">查詢</button>
-</form>
+    <h1>🔍 訂單查詢</h1>
 
-{% if results %}
-<hr>
-<h2>查詢結果</h2>
-<table border="1" cellpadding="5">
-    <tr>
-        <th>訂單編號</th>
-        <th>訂購人</th>
-        <th>電影</th>
-        <th>場次</th>
-        <th>票數</th>
-    </tr>
-    {% for r in results %}
-    <tr>
-        <td>{{ r.order_no }}</td>
-        <td>{{ r.customer_name }}</td>
-        <td>{{ r.title }}</td>
-        <td>{{ r.showtime }}</td>
-        <td>{{ r.tickets }}</td>
-        <td>
-            <form method="post" action="/delete_order/{{ r.order_no }}" onsubmit="return confirm('確定要刪除這筆訂單嗎？');">
-                <button type="submit" style="background-color:red;color:white;border:none;padding:4px 8px;border-radius:4px;">刪除</button>
-            </form>
-        </td>
-    </tr>
-    {% endfor %}
-</table>
-{% elif searched %}
-<p style="color:red;">查無此訂單</p>
-{% endif %}
+    {% if user_name %}
+        <p class="info">使用者：<strong>{{ user_name }}</strong>（已登入，可查看所有訂單）</p>
+    {% else %}
+        <p class="info">未登入，請輸入訂單編號查詢您的訂單</p>
+    {% endif %}
 
-<br>
-<a href="/" style="text-decoration:none; padding:6px 12px; background-color:#4CAF50; color:white; border-radius:4px;">⬅ 返回電影列表</a>
+    <div class="search-card">
+        <form method="post">
+            訂單編號（選填）：
+            <input type="text" name="order_no" placeholder="請輸入訂單編號">
+            <button type="submit">查詢</button>
+        </form>
+    </div>
+
+    {% if results %}
+        <h2>查詢結果</h2>
+        <table>
+            <tr>
+                <th>訂單編號</th>
+                <th>訂購人</th>
+                <th>電影</th>
+                <th>場次</th>
+                <th>票數</th>
+                <th>操作</th>
+            </tr>
+            {% for r in results %}
+            <tr>
+                <td>{{ r.order_no }}</td>
+                <td>{{ r.customer_name }}</td>
+                <td>{{ r.title }}</td>
+                <td>{{ r.showtime }}</td>
+                <td>{{ r.tickets }}</td>
+                <td>
+                    <form method="post" action="/delete_order/{{ r.order_no }}"
+                          onsubmit="return confirm('確定要刪除這筆訂單嗎？');">
+                        <button type="submit" class="delete-btn">刪除</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+    {% elif searched %}
+        <p class="no-result">❌ 查無此訂單</p>
+    {% endif %}
+
+    <a href="/" class="back-link">⬅ 返回電影列表</a>
+
+</div>
 
 </body>
 </html>
