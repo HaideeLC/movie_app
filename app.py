@@ -73,7 +73,9 @@ def init_db():
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT UNIQUE,
-            password TEXT
+            password TEXT,
+            full_name TEXT,
+            phone TEXT
         )
     """)
 
@@ -120,24 +122,19 @@ def generate_unique_order_no(db):
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        username = request.form["username"]
-        password = request.form["password"]
-        db = get_db()
-        
-        # 先檢查帳號是否存在
-        user_exists = db.execute("SELECT * FROM users WHERE username=?", (username,)).fetchone()
-        if not user_exists:
-            return render_template("login.html", error="尚未註冊")
+        username = request.form.get("username", "").strip()
+        password = request.form.get("password", "").strip()
 
-        # 帳號存在，再檢查密碼
+        db = get_db()
         user = db.execute("SELECT * FROM users WHERE username=? AND password=?", (username, password)).fetchone()
-        if user:
-            session["user_id"] = user["id"]
-            session["username"] = user["username"]
-            return redirect(url_for("movies"))
-        else:
-            return render_template("login.html", error="密碼錯誤")
-    
+        if not user:
+            return "帳號或密碼錯誤", 400
+
+        # 登入成功
+        session["username"] = user["username"]
+        session["user_id"] = user["id"]
+        return "", 200
+
     return render_template("login.html")
 
 @app.route("/logout")
@@ -213,19 +210,34 @@ def book(movie_id):
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
-        username = request.form["username"]
-        password = request.form["password"]
+        username = request.form.get("username", "").strip()
+        password = request.form.get("password", "").strip()
+        full_name = request.form.get("full_name", "").strip()
+        phone = request.form.get("phone", "").strip()
+
+        # 後端驗證姓名
+        if full_name.isdigit() or len(full_name) == 0:
+            return "姓名不能全為數字，請輸入正確姓名", 400
+
+        # 後端驗證電話
+        if not phone.isdigit():
+            return "電話只能包含數字", 400
+        
+        if len(phone) < 8 or len(phone) > 15:
+            return "電話長度需介於 8~15 位數", 400
 
         db = get_db()
-        # 檢查帳號是否已存在
         exists = db.execute("SELECT * FROM users WHERE username=?", (username,)).fetchone()
         if exists:
-            return render_template("register.html", error="帳號已存在")
-        
-        # 新增使用者
-        db.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, password))
+            return "帳號已存在", 400
+
+        db.execute(
+            "INSERT INTO users (username, password, full_name, phone) VALUES (?, ?, ?, ?)",
+            (username, password, full_name, phone)
+        )
         db.commit()
-        return redirect(url_for("login"))
+
+        return "", 200
 
     return render_template("register.html")
 
@@ -316,7 +328,7 @@ def employee_login():
         if employee:
             session["employee_id"] = employee["id"]
             session["employee_username"] = employee["username"]
-            return redirect(url_for("mange_movies"))
+            return redirect(url_for("manage_movies"))
         else:
             error = "帳號或密碼錯誤"
 

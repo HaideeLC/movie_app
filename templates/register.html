@@ -1,126 +1,222 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-    <meta charset="UTF-8">
-    <title>註冊新帳號</title>
-    <style>
-        /* ===== 全域樣式 ===== */
-        body {
-            margin: 0;
-            font-family: "Segoe UI", Arial, sans-serif;
-            background: linear-gradient(135deg, #1f2937, #111827);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            color: #111;
-        }
+<meta charset="UTF-8">
+<title>註冊新帳號</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin:0; padding:0; }
 
-        /* ===== 註冊卡片 ===== */
-        .register-container {
-            background-color: #ffffff;
-            padding: 40px 30px;
-            border-radius: 12px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-            width: 380px;
-            max-width: 90%;
-            text-align: center;
-        }
+/* ===== 背景海報牆 (模糊) ===== */
+body {
+    font-family: "Segoe UI", Arial, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: url('https://images.unsplash.com/photo-1524985069026-dd778a71c7b4?auto=format&fit=crop&w=1470&q=80') no-repeat center center fixed;
+    background-size: cover;
+    position: relative;
+}
 
-        h1 {
-            margin-bottom: 30px;
-            font-size: 28px;
-            color: #111827;
-        }
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: inherit;
+    filter: blur(12px) brightness(0.5);
+    z-index: -1;
+}
 
-        /* ===== 表單樣式 ===== */
-        form {
-            display: flex;
-            flex-direction: column;
-        }
+/* ===== 註冊票卡 ===== */
+.register-container {
+    position: relative;
+    z-index: 1;
+    width: 400px;
+    max-width: 90%;
+    background: rgba(255,255,255,0.15);
+    backdrop-filter: blur(8px);
+    border-radius: 20px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.5);
+    padding: 50px 40px;
+    text-align: center;
+    color: white;
+    overflow: hidden;
+    animation: fadeIn 0.8s ease-out;
+}
 
-        label {
-            text-align: left;
-            font-weight: bold;
-            margin-bottom: 6px;
-            color: #374151;
-        }
+@keyframes fadeIn {
+    from { opacity:0; transform: translateY(-20px);}
+    to { opacity:1; transform: translateY(0);}
+}
 
-        input[type="text"],
-        input[type="password"] {
-            padding: 12px;
-            margin-bottom: 20px;
-            border-radius: 8px;
-            border: 1px solid #d1d5db;
-            font-size: 16px;
-            outline: none;
-            transition: border-color 0.2s;
-        }
+.register-container h1 {
+    font-family: 'Oswald', sans-serif;
+    font-size: 36px;
+    color: #fcd34d;
+    margin-bottom: 30px;
+    text-shadow: 2px 2px 8px rgba(0,0,0,0.7);
+}
 
-        input[type="text"]:focus,
-        input[type="password"]:focus {
-            border-color: #2563eb;
-        }
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    text-align: left;
+}
 
-        button {
-            padding: 12px;
-            border: none;
-            border-radius: 8px;
-            background-color: #2563eb;
-            color: white;
-            font-size: 16px;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
+label {
+    font-weight: 500;
+    color: #f1f5f9;
+}
 
-        button:hover {
-            background-color: #1e40af;
-        }
+input[type="text"], input[type="password"] {
+    padding: 14px;
+    border-radius: 12px;
+    border: none;
+    background: rgba(255,255,255,0.1);
+    color: #f1f5f9;
+    font-size: 16px;
+    transition: all 0.3s;
+}
 
-        /* ===== 錯誤訊息 ===== */
-        .error {
-            color: #dc2626;
-            margin-bottom: 15px;
-            font-size: 14px;
-        }
+input:focus {
+    outline: none;
+    background: rgba(255,255,255,0.2);
+    box-shadow: 0 0 12px #fcd34d;
+}
 
-        /* ===== 登入連結 ===== */
-        .login-link {
-            margin-top: 15px;
-            font-size: 14px;
-        }
+button {
+    padding: 14px;
+    border-radius: 12px;
+    border: none;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    background: linear-gradient(90deg,#fbbf24,#f97316);
+    color: #111827;
+    text-shadow: 1px 1px 2px #fff;
+    transition: all 0.3s;
+    clip-path: polygon(10% 0%, 90% 0%, 100% 100%, 0% 100%);
+}
 
-        .login-link a {
-            color: #2563eb;
-            text-decoration: none;
-        }
+button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+    background: linear-gradient(90deg,#f97316,#fbbf24);
+}
 
-        .login-link a:hover {
-            text-decoration: underline;
-        }
-    </style>
+.error-box {
+    display: none;
+    background-color: #b91c1c;
+    color: #fef2f2;
+    border-radius: 10px;
+    padding: 12px;
+    font-size: 14px;
+    margin-bottom: 15px;
+    animation: shake 0.3s;
+}
+
+@keyframes shake {
+    0%{transform:translateX(0);}25%{transform:translateX(-5px);}
+    50%{transform:translateX(5px);}75%{transform:translateX(-5px);}
+    100%{transform:translateX(0);}
+}
+
+#phoneError {
+    color: #fcd34d;
+    font-size: 14px;
+    margin-top: -10px;
+    margin-bottom: 10px;
+}
+
+.login-link {
+    margin-top: 15px;
+    font-size: 14px;
+    text-align: center;
+}
+
+.login-link a {
+    color: #fcd34d;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.login-link a:hover {
+    text-decoration: underline;
+}
+</style>
 </head>
 <body>
 
 <div class="register-container">
-    <h1>註冊新帳號</h1>
+    <h1>🎬 註冊新帳號</h1>
 
-    <form method="post">
-        <label>姓名</label>
-        <input type="text" name="username" required>
+    <!-- 錯誤提示 -->
+    <div id="errorBox" class="error-box"></div>
+
+    <form method="post" id="registerForm">
+        <label>帳號</label>
+        <input type="text" name="username" value="{{ request.form.username or '' }}" required>
 
         <label>密碼</label>
-        <input type="password" name="password" required>
+        <input type="password" name="password" value="{{ request.form.password or '' }}" required>
+
+        <label>姓名</label>
+        <input type="text" name="full_name" value="{{ request.form.full_name or '' }}" required>
+
+        <label>電話</label>
+        <input type="text" name="phone" id="phone" value="{{ request.form.phone or '' }}" required>
+        <div id="phoneError" style="display:none;"></div>
 
         <button type="submit">註冊</button>
     </form>
 
-    {% if error %}
-    <p class="error">{{ error }}</p>
-    {% endif %}
-
     <p class="login-link">已經有帳號？<a href="/login">點此登入</a></p>
 </div>
+
+<script>
+const registerForm = document.getElementById("registerForm");
+const errorBox = document.getElementById("errorBox");
+const phoneInput = document.getElementById("phone");
+const phoneError = document.getElementById("phoneError");
+
+// 前端即時電話驗證
+phoneInput.addEventListener("input", function(){
+    if(!/^\d*$/.test(phoneInput.value)){
+        phoneError.innerText = "電話只能輸入數字";
+        phoneError.style.display = "block";
+    } else {
+        phoneError.style.display = "none";
+    }
+});
+
+// 不換頁提交表單
+registerForm.addEventListener("submit", function(e){
+    e.preventDefault();
+    errorBox.style.display = "none";
+
+    // 若電話有前端錯誤，不送出
+    if(phoneError.style.display === "block"){
+        return;
+    }
+
+    fetch(window.location.pathname, {
+        method: "POST",
+        body: new FormData(registerForm)
+    })
+    .then(async res => {
+        if(!res.ok){
+            const msg = await res.text();
+            errorBox.innerText = msg;
+            errorBox.style.display = "block";
+            return;
+        }
+        // 成功跳轉登入頁
+        window.location.href = "/login";
+    });
+});
+</script>
 
 </body>
 </html>

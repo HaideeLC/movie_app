@@ -1,17 +1,148 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<title>員工登入</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin:0; padding:0; }
+
+/* ===== 背景海報牆 (模糊) ===== */
+body {
+    font-family: "Segoe UI", Arial, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: url('https://images.unsplash.com/photo-1524985069026-dd778a71c7b4?auto=format&fit=crop&w=1470&q=80') no-repeat center center fixed;
+    background-size: cover;
+    position: relative;
+}
+
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: inherit;
+    filter: blur(12px) brightness(0.5);
+    z-index: -1;
+}
+
+/* ===== 員工登入票卡 ===== */
+.login-container {
+    position: relative;
+    z-index: 1;
+    width: 400px;
+    max-width: 90%;
+    background: rgba(255,255,255,0.15);
+    backdrop-filter: blur(8px);
+    border-radius: 20px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.5);
+    padding: 50px 40px;
+    text-align: center;
+    color: white;
+    overflow: hidden;
+    animation: fadeIn 0.8s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity:0; transform: translateY(-20px);}
+    to { opacity:1; transform: translateY(0);}
+}
+
+.login-container h1 {
+    font-family: 'Oswald', sans-serif;
+    font-size: 36px;
+    color: #fcd34d;
+    margin-bottom: 30px;
+    text-shadow: 2px 2px 8px rgba(0,0,0,0.7);
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    text-align: left;
+}
+
+label {
+    font-weight: 500;
+    color: #f1f5f9;
+}
+
+input[type="text"], input[type="password"] {
+    padding: 14px;
+    border-radius: 12px;
+    border: none;
+    background: rgba(255,255,255,0.1);
+    color: #f1f5f9;
+    font-size: 16px;
+    transition: all 0.3s;
+}
+
+input:focus {
+    outline: none;
+    background: rgba(255,255,255,0.2);
+    box-shadow: 0 0 12px #fcd34d;
+}
+
+button {
+    padding: 14px;
+    border-radius: 12px;
+    border: none;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    background: linear-gradient(90deg,#fbbf24,#f97316);
+    color: #111827;
+    text-shadow: 1px 1px 2px #fff;
+    transition: all 0.3s;
+    clip-path: polygon(10% 0%, 90% 0%, 100% 100%, 0% 100%);
+}
+
+button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+    background: linear-gradient(90deg,#f97316,#fbbf24);
+}
+
+.error-box {
+    display: none;
+    background-color: #b91c1c;
+    color: #fef2f2;
+    border-radius: 10px;
+    padding: 12px;
+    font-size: 14px;
+    margin-bottom: 15px;
+    animation: shake 0.3s;
+}
+
+@keyframes shake {
+    0%{transform:translateX(0);}25%{transform:translateX(-5px);}
+    50%{transform:translateX(5px);}75%{transform:translateX(-5px);}
+    100%{transform:translateX(0);}
+}
+</style>
+</head>
 <body>
-<h2>員工登入</h2>
 
-<form method="post">
-    帳號：<input type="text" name="username" required><br><br>
-    密碼：<input type="password" name="password" required><br><br>
-    <button type="submit">登入</button>
-</form>
+<div class="login-container">
+    <h1>🎬 員工登入</h1>
 
-{% if error %}
-<p style="color:red;">{{ error }}</p>
-{% endif %}
+    {% if error %}
+    <div class="error-box" style="display:block;">{{ error }}</div>
+    {% endif %}
+
+    <form method="post" id="employeeLoginForm">
+        <label>帳號</label>
+        <input type="text" name="username" required>
+
+        <label>密碼</label>
+        <input type="password" name="password" required>
+
+        <button type="submit">登入</button>
+    </form>
+</div>
 
 </body>
 </html>

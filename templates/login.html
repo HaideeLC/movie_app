@@ -1,126 +1,184 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-    <meta charset="UTF-8">
-    <title>登入系統</title>
-    <style>
-        /* ===== 全域樣式 ===== */
-        body {
-            margin: 0;
-            font-family: "Segoe UI", Arial, sans-serif;
-            background: linear-gradient(135deg, #1f2937, #111827);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            color: #111;
-        }
+<meta charset="UTF-8">
+<title>電影訂票系統登入</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin:0; padding:0; }
 
-        /* ===== 登入卡片 ===== */
-        .login-container {
-            background-color: #ffffff;
-            padding: 40px 30px;
-            border-radius: 12px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-            width: 380px;
-            max-width: 90%;
-            text-align: center;
-        }
+/* ===== 背景海報牆 (模糊) ===== */
+body {
+    font-family: "Segoe UI", Arial, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: url('https://images.unsplash.com/photo-1524985069026-dd778a71c7b4?auto=format&fit=crop&w=1470&q=80') no-repeat center center fixed;
+    background-size: cover;
+    position: relative;
+}
 
-        h1 {
-            margin-bottom: 30px;
-            font-size: 28px;
-            color: #111827;
-        }
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: inherit;
+    filter: blur(12px) brightness(0.5);
+    z-index: -1;
+}
 
-        /* ===== 表單樣式 ===== */
-        form {
-            display: flex;
-            flex-direction: column;
-        }
+/* ===== 登入票卡 ===== */
+.login-ticket {
+    position: relative;
+    z-index: 1;
+    width: 400px;
+    max-width: 90%;
+    background: rgba(255,255,255,0.15);
+    backdrop-filter: blur(8px);
+    border-radius: 20px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.5);
+    padding: 50px 40px;
+    text-align: center;
+    color: white;
+    overflow: hidden;
+    animation: fadeIn 0.8s ease-out;
+}
 
-        label {
-            text-align: left;
-            font-weight: bold;
-            margin-bottom: 6px;
-            color: #374151;
-        }
+@keyframes fadeIn {
+    from { opacity:0; transform: translateY(-20px);}
+    to { opacity:1; transform: translateY(0);}
+}
 
-        input[type="text"],
-        input[type="password"] {
-            padding: 12px;
-            margin-bottom: 20px;
-            border-radius: 8px;
-            border: 1px solid #d1d5db;
-            font-size: 16px;
-            outline: none;
-            transition: border-color 0.2s;
-        }
+.login-ticket h1 {
+    font-family: 'Oswald', sans-serif;
+    font-size: 36px;
+    color: #fcd34d;
+    margin-bottom: 30px;
+    text-shadow: 2px 2px 8px rgba(0,0,0,0.7);
+}
 
-        input[type="text"]:focus,
-        input[type="password"]:focus {
-            border-color: #2563eb;
-        }
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    text-align: left;
+}
 
-        button {
-            padding: 12px;
-            border: none;
-            border-radius: 8px;
-            background-color: #2563eb;
-            color: white;
-            font-size: 16px;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
+label {
+    font-weight: 500;
+    color: #f1f5f9;
+}
 
-        button:hover {
-            background-color: #1e40af;
-        }
+input[type="text"], input[type="password"] {
+    padding: 14px;
+    border-radius: 12px;
+    border: none;
+    background: rgba(255,255,255,0.1);
+    color: #f1f5f9;
+    font-size: 16px;
+    transition: all 0.3s;
+}
+input:focus {
+    outline: none;
+    background: rgba(255,255,255,0.2);
+    box-shadow: 0 0 12px #fcd34d;
+}
 
-        /* ===== 錯誤訊息 ===== */
-        .error {
-            color: #dc2626;
-            margin-bottom: 15px;
-            font-size: 14px;
-        }
+button {
+    padding: 14px;
+    border-radius: 12px;
+    border: none;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    background: linear-gradient(90deg,#fbbf24,#f97316);
+    color: #111827;
+    text-shadow: 1px 1px 2px #fff;
+    transition: all 0.3s;
+    clip-path: polygon(10% 0%, 90% 0%, 100% 100%, 0% 100%);
+}
+button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+    background: linear-gradient(90deg,#f97316,#fbbf24);
+}
 
-        /* ===== 註冊連結 ===== */
-        .register-link {
-            margin-top: 15px;
-            font-size: 14px;
-        }
+.error-box {
+    display: none;
+    background-color: #b91c1c;
+    color: #fef2f2;
+    border-radius: 10px;
+    padding: 12px;
+    font-size: 14px;
+    margin-bottom: 15px;
+    animation: shake 0.3s;
+}
+@keyframes shake {
+    0%{transform:translateX(0);}25%{transform:translateX(-5px);}
+    50%{transform:translateX(5px);}75%{transform:translateX(-5px);}
+    100%{transform:translateX(0);}
+}
 
-        .register-link a {
-            color: #2563eb;
-            text-decoration: none;
-        }
-
-        .register-link a:hover {
-            text-decoration: underline;
-        }
-    </style>
+.register-link {
+    margin-top: 15px;
+    font-size: 14px;
+    text-align: center;
+}
+.register-link a {
+    color: #fcd34d;
+    font-weight: 600;
+    text-decoration: none;
+}
+.register-link a:hover {
+    text-decoration: underline;
+}
+</style>
 </head>
 <body>
 
-<div class="login-container">
-    <h1>登入系統</h1>
+<!-- 登入票卡 -->
+<div class="login-ticket">
+    <h1>🎬 銀幕登入</h1>
 
-    <form method="post">
-        <label>姓名</label>
-        <input type="text" name="username" required>
+    <div id="errorBox" class="error-box"></div>
+
+    <form method="post" id="loginForm">
+        <label>帳號</label>
+        <input type="text" name="username" value="{{ request.form.username or '' }}" required>
 
         <label>密碼</label>
-        <input type="password" name="password" required>
+        <input type="password" name="password" value="{{ request.form.password or '' }}" required>
 
         <button type="submit">登入</button>
     </form>
 
-    {% if error %}
-    <p class="error">{{ error }}</p>
-    {% endif %}
-
-    <p class="register-link">還沒有帳號？<a href="/register">點此註冊</a></p>
+    <p class="register-link">還沒有帳號？<a href="/register">立即註冊</a></p>
 </div>
+
+<script>
+const loginForm = document.getElementById("loginForm");
+const errorBox = document.getElementById("errorBox");
+
+loginForm.addEventListener("submit", function(e){
+    e.preventDefault();
+    errorBox.style.display = "none";
+
+    fetch(window.location.pathname, {
+        method: "POST",
+        body: new FormData(loginForm)
+    })
+    .then(async res => {
+        if(!res.ok){
+            const msg = await res.text();
+            errorBox.innerText = msg;
+            errorBox.style.display = "block";
+            return;
+        }
+        window.location.href = "/";
+    });
+});
+</script>
 
 </body>
 </html>

@@ -1,49 +1,145 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-TW">
 <head>
-    <title>電影列表</title>
-    <style>
-        table { border-collapse: collapse; width: 100%; }
-        th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
-        img { width: 100px; }
-        button { padding: 4px 8px; border: none; border-radius: 4px; cursor: pointer; }
-        .book-btn { background-color: green; color: white; }
-    </style>
+<meta charset="UTF-8">
+<title>員工電影管理</title>
+<style>
+body {
+    margin: 0;
+    font-family: "Segoe UI", Arial, sans-serif;
+    min-height: 100vh;
+    background: url('https://images.unsplash.com/photo-1524985069026-dd778a71c7b4?auto=format&fit=crop&w=1470&q=80') no-repeat center center fixed;
+    background-size: cover;
+    color: white;
+}
+
+/* 模糊背景層 */
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: inherit;
+    filter: blur(12px) brightness(0.5);
+    z-index: -1;
+}
+
+/* 主要容器 */
+.container {
+    position: relative;
+    z-index: 1;
+    max-width: 900px;
+    margin: 40px auto;
+    padding: 20px;
+    background: rgba(0,0,0,0.5);
+    border-radius: 12px;
+}
+
+/* 標題列 */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.header h1 {
+    margin: 0;
+}
+
+/* 登出按鈕 */
+.logout-btn {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 6px;
+    background-color: #dc2626;
+    color: white;
+    cursor: pointer;
+    text-decoration: none;
+    font-weight: bold;
+}
+.logout-btn:hover {
+    background-color: #b91c1c;
+}
+
+/* 表格 */
+table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+th, td { border: 1px solid #ccc; padding: 8px; text-align: center; background: rgba(255,255,255,0.1); }
+img { width: 80px; height: 120px; object-fit: cover; border-radius: 4px; }
+button { padding: 4px 8px; border: none; border-radius: 4px; cursor: pointer; }
+.book-btn { background-color: #16a34a; color: white; }
+.delete-btn { background-color: #dc2626; color: white; }
+.add-btn { background-color: #2563eb; color: white; margin-top: 10px; }
+
+/* 新增表單 */
+form.inline { display: inline; }
+.add-movie-form input {
+    margin-bottom: 8px;
+    padding: 6px;
+    border-radius: 4px;
+    border: none;
+    width: calc(100% - 12px);
+}
+</style>
 </head>
 <body>
 
-<h1>電影列表</h1>
+<div class="container">
+    <!-- 標題列：顯示員工名稱 + 登出 -->
+    <div class="header">
+        <h1>🎬 員工電影管理</h1>
+        <div>
+            員工：{{ employee_name }} &nbsp;|&nbsp;
+            <a href="{{ url_for('logout') }}" class="logout-btn">登出</a>
+        </div>
+    </div>
 
-<table>
-    <thead>
-        <tr>
-            <th>電影名稱</th>
-            <th>電影縮圖</th>
-            <th>放映時間</th>
-            <th>操作</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for m in movies %}
-        <tr>
-            <td>{{ m.title }}</td>
-            <td>
-                {% if m.poster_url %}
-                    <img src="{{ m.poster_url }}" alt="{{ m.title }}">
-                {% else %}
-                    <img src="https://via.placeholder.com/100x150?text=No+Image" alt="No Image">
-                {% endif %}
-            </td>
-            <td>{{ m.showtime }}</td>
-            <td>
-                <form method="get" action="/book/{{ m.id }}">
-                    <button class="book-btn">訂票</button>
-                </form>
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+    <!-- 新增電影表單 -->
+    <div class="add-movie-form">
+        <h3>新增電影</h3>
+        <form method="post" action="/manage_movies">
+            <input type="text" name="title" placeholder="電影名稱" required><br>
+            <input type="text" name="showtime" placeholder="放映時間" required><br>
+            <input type="text" name="poster_url" placeholder="海報 URL (可空白)"><br>
+            <input type="number" name="total_seats" placeholder="座位數 (預設100)" min="1"><br>
+            <button type="submit" class="add-btn">新增電影</button>
+        </form>
+    </div>
+
+    <!-- 電影列表 -->
+    <table>
+        <thead>
+            <tr>
+                <th>電影名稱</th>
+                <th>海報</th>
+                <th>放映時間</th>
+                <th>座位數</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for m in movies %}
+            <tr>
+                <td>{{ m.title }}</td>
+                <td>
+                    {% if m.poster_url %}
+                        <img src="{{ m.poster_url }}" alt="{{ m.title }}">
+                    {% else %}
+                        <img src="https://via.placeholder.com/80x120?text=No+Image" alt="No Image">
+                    {% endif %}
+                </td>
+                <td>{{ m.showtime }}</td>
+                <td>{{ m.total_seats }}</td>
+                <td>
+                    <form method="post" action="/delete_movie/{{ m.id }}" class="inline"
+                          onsubmit="return confirm('確定刪除這部電影嗎？');">
+                        <button class="delete-btn">刪除</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
 
 </body>
 </html>
