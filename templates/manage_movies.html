@@ -12,8 +12,6 @@ body {
     background-size: cover;
     color: white;
 }
-
-/* 模糊背景層 */
 body::before {
     content: "";
     position: fixed;
@@ -22,31 +20,22 @@ body::before {
     filter: blur(12px) brightness(0.5);
     z-index: -1;
 }
-
-/* 主要容器 */
 .container {
     position: relative;
     z-index: 1;
-    max-width: 900px;
+    max-width: 1000px;
     margin: 40px auto;
     padding: 20px;
     background: rgba(0,0,0,0.5);
     border-radius: 12px;
 }
-
-/* 標題列 */
 .header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 20px;
 }
-
-.header h1 {
-    margin: 0;
-}
-
-/* 登出按鈕 */
+.header h1 { margin: 0; }
 .logout-btn {
     padding: 6px 12px;
     border: none;
@@ -57,11 +46,7 @@ body::before {
     text-decoration: none;
     font-weight: bold;
 }
-.logout-btn:hover {
-    background-color: #b91c1c;
-}
-
-/* 新增表單 */
+.logout-btn:hover { background-color: #b91c1c; }
 .add-movie-form input {
     margin-bottom: 8px;
     padding: 6px;
@@ -78,11 +63,7 @@ body::before {
     cursor: pointer;
     border: none;
 }
-.add-btn:hover {
-    background-color: #1d4ed8;
-}
-
-/* 表格 */
+.add-btn:hover { background-color: #1d4ed8; }
 table {
     border-collapse: collapse;
     width: 100%;
@@ -92,6 +73,7 @@ th, td {
     border: 1px solid #ccc;
     padding: 8px;
     text-align: center;
+    vertical-align: middle;
     background: rgba(255,255,255,0.1);
 }
 img {
@@ -108,16 +90,17 @@ button.delete-btn {
     border-radius: 4px;
     cursor: pointer;
 }
-button.delete-btn:hover {
-    background-color: #b91c1c;
-}
+button.delete-btn:hover { background-color: #b91c1c; }
 form.inline { display: inline; }
+.list-column div {
+    margin: 2px 0;
+}
 </style>
 </head>
 <body>
 
 <div class="container">
-    <!-- 標題列：顯示員工名稱 + 登出 -->
+    <!-- 標題列 -->
     <div class="header">
         <h1>🎬 員工電影管理</h1>
         <div>
@@ -128,13 +111,14 @@ form.inline { display: inline; }
 
     <!-- 新增電影表單 -->
     <div class="add-movie-form">
-        <h3>新增電影</h3>
+        <h3>新增電影 / 場次</h3>
         <form method="post" action="{{ url_for('manage_movies') }}">
             <input type="text" name="title" placeholder="電影名稱" required><br>
-            <input type="text" name="showtime" placeholder="放映時間" required><br>
             <input type="text" name="poster_url" placeholder="海報檔名 (放在 static/posters/ 目錄)"><br>
             <input type="number" name="total_seats" placeholder="座位數 (預設250)" min="1"><br>
-            <button type="submit" class="add-btn">新增電影</button>
+            <input type="text" name="weekday" placeholder="星期 (例: 週五)"><br>
+            <input type="text" name="time" placeholder="時間 (例: 18:00)"><br>
+            <button type="submit" class="add-btn">新增電影 / 場次</button>
         </form>
     </div>
 
@@ -144,31 +128,61 @@ form.inline { display: inline; }
             <tr>
                 <th>電影名稱</th>
                 <th>海報</th>
-                <th>放映時間</th>
+                <th>星期</th>
+                <th>時間</th>
                 <th>座位數</th>
                 <th>操作</th>
             </tr>
         </thead>
         <tbody>
             {% for m in movies %}
-            <tr>
-                <td>{{ m.title }}</td>
-                <td>
-                    {% if m.poster_url %}
-                        <img src="{{ url_for('static', filename=m.poster_url) }}" alt="{{ m.title }}">
-                    {% else %}
-                        <img src="https://via.placeholder.com/80x120?text=No+Image" alt="No Image">
-                    {% endif %}
-                </td>
-                <td>{{ m.showtime }}</td>
-                <td>{{ m.total_seats }}</td>
-                <td>
-                    <form method="post" action="{{ url_for('delete_movie', movie_id=m.id) }}" class="inline"
-                          onsubmit="return confirm('確定刪除這部電影嗎？');">
-                        <button class="delete-btn">刪除</button>
-                    </form>
-                </td>
-            </tr>
+                {% if m.showtimes %}
+                    {% for st in m.showtimes %}
+                        <tr>
+                            {% if loop.first %}
+                                <td rowspan="{{ m.showtimes|length }}">{{ m.title }}</td>
+                                <td rowspan="{{ m.showtimes|length }}">
+                                    {% if m.poster_url %}
+                                        <img src="{{ url_for('static', filename=m.poster_url) }}" alt="{{ m.title }}">
+                                    {% else %}
+                                        <img src="https://via.placeholder.com/80x120?text=No+Image" alt="No Image">
+                                    {% endif %}
+                                </td>
+                            {% endif %}
+                            <td>{{ st.weekday }}</td>
+                            <td>{{ st.time }}</td>
+                            <td>{{ st.total_seats }}</td>
+                            {% if loop.first %}
+                                <td rowspan="{{ m.showtimes|length }}">
+                                    <form method="post" action="{{ url_for('delete_movie', movie_id=m.id) }}" class="inline"
+                                          onsubmit="return confirm('確定刪除這部電影嗎？');">
+                                        <button class="delete-btn">刪除</button>
+                                    </form>
+                                </td>
+                            {% endif %}
+                        </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td>{{ m.title }}</td>
+                        <td>
+                            {% if m.poster_url %}
+                                <img src="{{ url_for('static', filename=m.poster_url) }}" alt="{{ m.title }}">
+                            {% else %}
+                                <img src="https://via.placeholder.com/80x120?text=No+Image" alt="No Image">
+                            {% endif %}
+                        </td>
+                        <td>尚未設定</td>
+                        <td>尚未設定</td>
+                        <td>{{ m.total_seats }}</td>
+                        <td>
+                            <form method="post" action="{{ url_for('delete_movie', movie_id=m.id) }}" class="inline"
+                                  onsubmit="return confirm('確定刪除這部電影嗎？');">
+                                <button class="delete-btn">刪除</button>
+                            </form>
+                        </td>
+                    </tr>
+                {% endif %}
             {% endfor %}
         </tbody>
     </table>

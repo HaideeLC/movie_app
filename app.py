@@ -278,9 +278,31 @@ def book(movie_id):
     showtimes = [dict(s) for s in showtimes]
 
     # ✅ 依星期 + 時間排序
-    weekday_order = {"一":1, "二":2, "三":3, "四":4, "五":5, "六":6, "日":7}
-    showtimes.sort(key=lambda st: (weekday_order.get(st['weekday'], 8), st['showtime']))
+    weekday_order = {"週一": 1,"週二": 2,"週三": 3,"週四": 4,"週五": 5,"週六": 6,"週日": 7,}
+    def normalize_weekday(w):
+        if not w:
+            return ""
+        w = w.strip()
+        mapping = {
+        "一": "週一", "星期一": "週一", "禮拜一": "週一", "週一": "週一",
+        "二": "週二", "星期二": "週二", "禮拜二": "週二", "週二": "週二",
+        "三": "週三", "星期三": "週三", "禮拜三": "週三", "週三": "週三",
+        "四": "週四", "星期四": "週四", "禮拜四": "週四", "週四": "週四",
+        "五": "週五", "星期五": "週五", "禮拜五": "週五", "週五": "週五",
+        "六": "週六", "星期六": "週六", "禮拜六": "週六", "週六": "週六",
+        "日": "週日", "天": "週日", "星期日": "週日", "禮拜日": "週日", "週日": "週日",
+    }
+        return mapping.get(w, w)
 
+    for st in showtimes:
+        st["weekday"] = normalize_weekday(st["weekday"])
+    showtimes.sort(
+        key=lambda st: (
+            weekday_order.get(st["weekday"], 8),
+            st["showtime"]
+        )
+    )
+    
     if request.method == "POST":
         selected_showtime_id = int(request.form.get("showtime_id"))
         tickets = int(request.form.get("tickets"))
@@ -395,29 +417,33 @@ def order():
 
 
 
-
-
-
-
-
-
-
 # -------------------------
 # 刪除訂單
 # -------------------------
-@app.route("/delete_order/<order_no>", methods=["POST"])
-def delete_order(order_no):
+@app.route("/delete_order/<order_no>/<int:showtime_id>", methods=["POST"])
+def delete_order(order_no, showtime_id):
+    if "username" not in session:
+        return jsonify({"success": False, "message": "尚未登入"})
+
     db = get_db()
     user_name = session.get("username")
-    if user_name:
-        cur = db.execute("DELETE FROM bookings WHERE order_no=? AND customer_name=?", (order_no, user_name))
-    else:
-        cur = db.execute("DELETE FROM bookings WHERE order_no=?", (order_no,))
-    db.commit()
-    if cur.rowcount == 0:
-        return jsonify({"success": False, "message": "查無訂單"})
-    return jsonify({"success": True})
 
+    cur = db.execute(
+        """
+        DELETE FROM bookings
+        WHERE order_no = ?
+        AND showtime_id = ?
+        AND customer_name = ?
+        """,
+        (order_no, showtime_id, user_name)
+    )
+
+    db.commit()
+
+    if cur.rowcount == 0:
+        return jsonify({"success": False, "message": "查無此場次訂單"})
+
+    return jsonify({"success": True})
 # -------------------------
 # 員工登入與電影管理
 # -------------------------
@@ -437,37 +463,91 @@ def employee_login():
             error = "帳號或密碼錯誤"
     return render_template("employee_login.html", error=error)
 
+
 @app.route("/manage_movies", methods=["GET", "POST"])
 def manage_movies():
     if "employee_id" not in session:
         return redirect(url_for("employee_login"))
     db = get_db()
+
     if request.method == "POST":
         title = request.form.get("title", "").strip()
         poster_file = request.form.get("poster_url", "").strip()
         total_seats = request.form.get("total_seats", "").strip()
+        weekday = request.form.get("weekday", "").strip()   # 星期
+        time_val = request.form.get("time", "").strip()     # 時間欄位
+
+        # 處理海報路徑
         poster_file = poster_file.split("/")[-1] if poster_file else ""
         poster_url = f"posters/{poster_file}" if poster_file else None
+
+        # 處理座位數
         try:
             total_seats = int(total_seats)
             if total_seats <= 0:
                 total_seats = 250
         except ValueError:
             total_seats = 250
-        if title:
-            db.execute("INSERT INTO movies (title, poster_url, total_seats) VALUES (?, ?, ?)", (title, poster_url, total_seats))
-            db.commit()
-    movies = db.execute("SELECT * FROM movies").fetchall()
-    return render_template("manage_movies.html", movies=movies, employee_name=session.get("employee_username"))
 
-@app.route("/delete_movie/<int:movie_id>", methods=["POST"])
-def delete_movie(movie_id):
-    if "employee_id" not in session:
-        return redirect(url_for("employee_login"))
-    db = get_db()
-    db.execute("DELETE FROM movies WHERE id=?", (movie_id,))
-    db.commit()
-    return redirect(url_for("manage_movies"))
+        if title:
+            # 檢查電影是否已存在
+            existing_movie = db.execute(
+                "SELECT * FROM movies WHERE title=?",
+                (title,)
+            ).fetchone()
+
+            if existing_movie:
+                movie_id = existing_movie['id']
+                # 如果有輸入新的海報，更新
+                if poster_url:
+                    db.execute(
+                        "UPDATE movies SET poster_url=? WHERE id=?",
+                        (poster_url, movie_id)
+                    )
+                    db.commit()
+            else:
+                # 不存在就新增電影
+                cursor = db.execute(
+                    "INSERT INTO movies (title, poster_url, total_seats) VALUES (?, ?, ?)",
+                    (title, poster_url, total_seats)
+                )
+                db.commit()
+                movie_id = cursor.lastrowid
+
+            # 處理場次（如果有輸入）
+            if weekday or time_val:
+                if not time_val:  # 如果沒輸入，預設 00:00
+                    time_val = "00:00"
+
+                db.execute(
+                    "INSERT INTO showtimes (movie_id, weekday, time, total_seats) VALUES (?, ?, ?, ?)",
+                    (movie_id, weekday, time_val, total_seats)
+                )
+                db.commit()
+
+    # ---- 取得電影 + 場次 ----
+    movies_raw = db.execute("SELECT * FROM movies").fetchall()
+    movies = []
+
+    for m in movies_raw:
+        # 取得該電影所有場次
+        showtimes = db.execute(
+            "SELECT weekday, time, total_seats FROM showtimes WHERE movie_id=? ORDER BY id",
+            (m['id'],)
+        ).fetchall()
+        m_dict = dict(m)
+        # 把 showtimes 轉成字典列表
+        m_dict['showtimes'] = [dict(st) for st in showtimes]
+        movies.append(m_dict)
+
+    return render_template(
+        "manage_movies.html",
+        movies=movies,
+        employee_name=session.get("employee_username")
+    )
+
+
+
 
 # -------------------------
 # 主程式

@@ -1,31 +1,83 @@
-<!-- templates/order.html -->
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
 <title>訂單查詢</title>
 <style>
-body { margin:0; font-family:"Segoe UI", Arial, sans-serif; min-height:100vh;
-       background:url('https://images.unsplash.com/photo-1524985069026-dd778a71c7b4?auto=format&fit=crop&w=1470&q=80') no-repeat center center fixed;
-       background-size:cover; color:white; }
-body::before { content:""; position:fixed; inset:0; background:inherit; filter:blur(12px) brightness(0.5); z-index:-1; }
-.container { position:relative; z-index:1; max-width:1200px; margin:40px auto; padding:20px; background:rgba(0,0,0,0.5); border-radius:12px; }
-.navbar { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
-.navbar a, .navbar span { color:white; text-decoration:none; font-weight:bold; margin-left:15px; }
-.navbar a:hover { text-decoration:underline; }
-.search-card { background:rgba(255,255,255,0.15); backdrop-filter:blur(6px); padding:20px; border-radius:12px; margin-bottom:30px; display:flex; justify-content:center; align-items:center; }
-.search-input { flex:1; padding:12px 16px; border-radius:8px 0 0 8px; border:none; font-size:16px; outline:none; background-color:rgba(255,255,255,0.2); color:white; }
-.search-input::placeholder { color:#e0e0e0; }
-.search-btn { padding:12px 20px; border:none; border-radius:0 8px 8px 0; background:#2563eb; color:white; font-size:16px; cursor:pointer; }
-.search-btn:hover { background:#1e40af; }
-table { width:100%; border-collapse:collapse; border-radius:10px; overflow:hidden; }
-th { background-color:rgba(31,41,55,0.9); color:white; padding:12px; font-size:14px; }
-td { padding:10px; text-align:center; border-bottom:1px solid rgba(255,255,255,0.2); }
-tr:hover { background-color:rgba(255,255,255,0.1); }
-.delete-btn { background-color:#dc2626; color:white; border:none; padding:6px 10px; border-radius:6px; cursor:pointer; }
-.delete-btn:hover { background-color:#b91c1c; }
-.no-result { color:#f87171; font-weight:bold; margin-top:20px; text-align:center; }
-.success-msg { color:#34d399; font-weight:bold; margin-top:20px; text-align:center; }
+body {
+    margin: 0;
+    font-family: "Segoe UI", Arial, sans-serif;
+    min-height: 100vh;
+    background: url('https://images.unsplash.com/photo-1524985069026-dd778a71c7b4?auto=format&fit=crop&w=1470&q=80') no-repeat center center fixed;
+    background-size: cover;
+    color: white;
+}
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: inherit;
+    filter: blur(12px) brightness(0.5);
+    z-index: -1;
+}
+.container {
+    position: relative;
+    z-index: 1;
+    max-width: 1200px;
+    margin: 40px auto;
+    padding: 20px;
+    background: rgba(0,0,0,0.5);
+    border-radius: 12px;
+}
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+.navbar a, .navbar span { color: white; text-decoration: none; font-weight: bold; margin-left: 15px; }
+.navbar a:hover { text-decoration: underline; }
+.search-card {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(6px);
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 30px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+}
+.search-input {
+    flex: 1;
+    padding: 12px 16px;
+    border-radius: 8px 0 0 8px;
+    border: none;
+    font-size: 16px;
+    outline: none;
+    background-color: rgba(255,255,255,0.2);
+    color: white;
+}
+.search-input::placeholder { color: #e0e0e0; }
+.search-btn {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 0 8px 8px 0;
+    background: #2563eb;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+}
+.search-btn:hover { background: #1e40af; }
+table { width: 100%; border-collapse: collapse; border-radius: 10px; overflow: hidden; }
+th { background-color: rgba(31,41,55,0.9); color: white; padding: 12px; font-size: 14px; }
+td { padding: 10px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.2); }
+tr:hover { background-color: rgba(255,255,255,0.1); }
+.delete-btn { background-color: #dc2626; color: white; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; }
+.delete-btn:hover { background-color: #b91c1c; }
+.no-result { color: #f87171; font-weight: bold; margin-top: 20px; }
+.back-link { display: inline-block; margin-top: 25px; padding: 10px 16px; background-color: #16a34a; color: white; text-decoration: none; border-radius: 8px; }
+.back-link:hover { background-color: #15803d; }
 </style>
 </head>
 <body>
@@ -48,7 +100,7 @@ tr:hover { background-color:rgba(255,255,255,0.1); }
     <!-- 查詢區：未登入才顯示 -->
     {% if not session.full_name %}
     <div class="search-card">
-        <form id="search-form" method="post" style="width:100%; display:flex; align-items:center;">
+        <form id="search-form" method="post" style="width: 100%; display: flex; align-items: center;">
             <input type="text" name="order_no" placeholder="請輸入訂單編號" class="search-input" required>
             <button type="submit" class="search-btn">🔍 查詢</button>
         </form>
@@ -73,7 +125,7 @@ tr:hover { background-color:rgba(255,255,255,0.1); }
                         <td>{{ r.order_no }}</td>
                         <td>{{ r.customer_name }}</td>
                         <td>{{ r.title }}</td>
-                        <td>{{ r.weekday }} {{ r.showtime }}</td>
+                        <td>{{ r.showtime }}</td>
                         <td>{{ r.tickets }}</td>
                         <td>
                             <form class="delete-form" data-order-no="{{ r.order_no }}">
@@ -105,29 +157,36 @@ document.querySelectorAll(".delete-form").forEach(form => {
         const orderNo = form.dataset.orderNo;
         if(!confirm("確定要取消這筆訂單嗎？")) return;
 
-        const res = await fetch(`/delete_order/${orderNo}`, { method:"POST" });
+        const res = await fetch(`/delete_order/${orderNo}`, { method: "POST" });
         const data = await res.json();
 
         if(data.success){
+            alert("訂單已取消");
             const row = form.closest("tr");
             row.remove();
+
+            // 判斷刪除後 table 是否還有資料（排除表頭）
             const table = document.querySelector("#order-results table");
             if(table){
-                const rows = table.querySelectorAll("tr");
-                if(rows.length <= 1){
-                    table.style.display="none";
-                    const msg = document.createElement("p");
-                    msg.textContent="✅ 刪除成功";
-                    msg.className="success-msg";
-                    const oldMsg = document.querySelector("#order-results .success-msg");
-                    if(oldMsg) oldMsg.remove();
-                    document.getElementById("order-results").appendChild(msg);
+                const bodyRows = table.querySelectorAll("tr");
+                if(bodyRows.length <= 1){ // 只有表頭
+                    table.style.display = "none"; // 隱藏表格
+
+                    // 顯示尚無訂單或查無訂單
+                    const noResult = document.createElement("p");
+                    {% if session.full_name %}
+                    noResult.textContent = "📭 尚無訂單";
+                    {% else %}
+                    noResult.textContent = "❌ 查無此訂單";
+                    {% endif %}
+                    noResult.className = "no-result";
+
+                    // 移除舊的 no-result 避免重複
+                    const oldNoResult = document.querySelector("#order-results .no-result");
+                    if(oldNoResult) oldNoResult.remove();
+
+                    document.getElementById("order-results").appendChild(noResult);
                 }
-            } else {
-                const msg = document.createElement("p");
-                msg.textContent="✅ 刪除成功";
-                msg.className="success-msg";
-                document.getElementById("order-results").appendChild(msg);
             }
         } else {
             alert("錯誤：" + data.message);
