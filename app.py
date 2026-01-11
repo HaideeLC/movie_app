@@ -1,37 +1,32 @@
-from flask import Flask, render_template, request, redirect, url_for, g, session
-from werkzeug.security import check_password_hash
-
-import os
-
-
-
+from flask import Flask, render_template, request, redirect, url_for, g, session, jsonify
 import sqlite3
+import os
 import uuid
 from datetime import datetime
+from collections import defaultdict
 
-print("🔍 Flask 啟動時的工作目錄:", os.getcwd())
-print("📂 templates 目錄內容:", os.listdir("templates"))
 
 app = Flask(__name__)
 app.secret_key = "super_secret_key"
 DATABASE = "database.db"
 
+# -------------------------
+# 資料庫連線
+# -------------------------
 def get_db():
     if "db" not in g:
         g.db = sqlite3.connect(DATABASE)
         g.db.row_factory = sqlite3.Row
     return g.db
 
-# 3️⃣ teardown
 @app.teardown_appcontext
 def close_db(error):
     db = g.pop("db", None)
     if db:
         db.close()
 
-
 # -------------------------
-# 資料庫工具
+# 初始化資料庫
 # -------------------------
 def init_db():
     db = sqlite3.connect(DATABASE)
@@ -51,9 +46,20 @@ def init_db():
         CREATE TABLE IF NOT EXISTS movies (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             title TEXT NOT NULL,
-            showtime TEXT NOT NULL,
             poster_url TEXT,
-            total_seats INTEGER DEFAULT 250
+            total_seats INTEGER DEFAULT 100
+        )
+    """)
+
+    # 場次表
+    db.execute("""
+        CREATE TABLE IF NOT EXISTS showtimes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            movie_id INTEGER NOT NULL,
+            weekday TEXT NOT NULL,
+            time TEXT NOT NULL,
+            total_seats INTEGER DEFAULT 100,
+            FOREIGN KEY (movie_id) REFERENCES movies(id)
         )
     """)
 
@@ -62,9 +68,11 @@ def init_db():
         CREATE TABLE IF NOT EXISTS bookings (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             order_no TEXT UNIQUE,
-            movie_id INTEGER,
-            customer_name TEXT,
-            tickets INTEGER
+            showtime_id INTEGER NOT NULL,
+            customer_name TEXT NOT NULL,
+            tickets INTEGER NOT NULL,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (showtime_id) REFERENCES showtimes(id)
         )
     """)
 
@@ -79,37 +87,75 @@ def init_db():
         )
     """)
 
+    # ------------------------
     # 預設電影資料
-    if db.execute("SELECT COUNT(*) FROM movies").fetchone()[0] == 0:
-        db.execute(
-            "INSERT INTO movies (title, showtime, poster_url,total_seats) VALUES (?, ?, ?,?)",
-            ("多哥", "19:00", "posters/多哥.png",100)
-        )
-        db.execute(
-            "INSERT INTO movies (title, showtime,poster_url,total_seats) VALUES (?, ?,?,?)",
-            ("天劫倒數", "21:00","posters/天劫倒數.png",150)
-        )
-        db.execute(
-            "INSERT INTO movies (title, showtime,poster_url,total_seats) VALUES (?, ?,?,?)",
-            ("氣象戰", "12:00","posters/氣象戰.png",180)
-        )
-        db.execute(
-            "INSERT INTO movies (title, showtime,poster_url,total_seats) VALUES (?, ?,?,?)",
-            ("塔羅牌", "21:00","posters/塔羅牌.png",230)
-        )
+    # ------------------------
+    movies = db.execute("SELECT id, title FROM movies").fetchall()
+    if len(movies) == 0:
+        # 新增電影
+        db.execute("INSERT INTO movies (title, poster_url, total_seats) VALUES (?, ?, ?)", ("多哥", "posters/多哥.png", 100))
+        db.execute("INSERT INTO movies (title, poster_url, total_seats) VALUES (?, ?, ?)", ("天劫倒數", "posters/天劫倒數.png", 150))
+        db.execute("INSERT INTO movies (title, poster_url, total_seats) VALUES (?, ?, ?)", ("氣象戰", "posters/氣象戰.png", 180))
+        db.execute("INSERT INTO movies (title, poster_url, total_seats) VALUES (?, ?, ?)", ("塔羅牌", "posters/塔羅牌.png", 230))
+        db.commit()
+        # 重新抓電影 ID
+        movies = db.execute("SELECT id, title FROM movies").fetchall()
+
+    # ------------------------
+    # 預設場次資料
+    # ------------------------
+    # 先查詢 showtimes 是否已經有資料
+    showtimes_count = db.execute("SELECT COUNT(*) FROM showtimes").fetchone()[0]
+
+    if showtimes_count == 0:
+        # 假設 movies 已經查好，是 list[dict]
         
+        # 電影 1：週二、週四、週日 19:00，座位 100
+        for day in ["週二", "週四", "週日"]:
+            db.execute(
+                "INSERT INTO showtimes (movie_id, weekday, time, total_seats) VALUES (?, ?, ?, ?)",
+                (movies[0]["id"], day, "19:00", 100)
+            )
 
+        # 電影 2：週二、週三、週五 21:00，座位 150
+        for day in ["週二", "週三", "週五"]:
+            db.execute(
+                "INSERT INTO showtimes (movie_id, weekday, time, total_seats) VALUES (?, ?, ?, ?)",
+                (movies[1]["id"], day, "21:00", 150)
+            )
+
+        # 電影 3：週一、週三、週六 12:00，座位 180
+        for day in ["週一", "週三", "週六"]:
+            db.execute(
+                "INSERT INTO showtimes (movie_id, weekday, time, total_seats) VALUES (?, ?, ?, ?)",
+                (movies[2]["id"], day, "12:00", 180)
+            )
+
+        # 電影 4：週一、週二、週四、週五 21:00，座位 230
+        for day in ["週一", "週二", "週四", "週五"]:
+            db.execute(
+                "INSERT INTO showtimes (movie_id, weekday, time, total_seats) VALUES (?, ?, ?, ?)",
+                (movies[3]["id"], day, "21:00", 230)
+            )
+
+        db.commit()
+    # ------------------------
     # 預設使用者
-    if db.execute("SELECT COUNT(*) FROM users").fetchone()[0] == 0:
-        db.execute("INSERT INTO users (username, password) VALUES (?, ?)", ("testuser", "1234"))
-
+    # ------------------------
+    users_count = db.execute("SELECT COUNT(*) FROM users").fetchone()[0]
+    if users_count == 0:
+        db.execute("INSERT INTO users (username, password, full_name, phone) VALUES (?, ?, ?, ?)",
+                   ("testuser", "1234", "測試用戶", "0912345678"))
+        db.commit()
+    # ------------------------
     # 預設員工
-    if db.execute("SELECT COUNT(*) FROM employees").fetchone()[0] == 0:
+    # ------------------------
+    employees_count = db.execute("SELECT COUNT(*) FROM employees").fetchone()[0]
+    if employees_count == 0:
         db.execute("INSERT INTO employees (username, password) VALUES (?, ?)", ("aa", "111"))
 
     db.commit()
     db.close()
-
 # -------------------------
 # 訂單號生成
 # -------------------------
@@ -133,110 +179,141 @@ def login():
     if request.method == "POST":
         username = request.form.get("username", "").strip()
         password = request.form.get("password", "").strip()
-
         db = get_db()
-        # 查詢時同時拿到 full_name
-        user = db.execute(
-            "SELECT * FROM users WHERE username=? AND password=?", 
-            (username, password)
-        ).fetchone()
-
+        user = db.execute("SELECT * FROM users WHERE username=? AND password=?", (username, password)).fetchone()
         if not user:
             return "帳號或密碼錯誤", 400
-
-        # 登入成功，把帳號、id、姓名存進 session
         session["user_id"] = user["id"]
-        session["username"] = user["username"]      # 可保留
-        session["full_name"] = user["full_name"]    # 新增姓名
-
+        session["username"] = user["username"]
+        session["full_name"] = user["full_name"]
         return "", 200
-
     return render_template("login.html")
-
 
 @app.route("/logout")
 def logout():
     session.clear()
     return redirect(url_for("movies"))
 
-
-
+# -------------------------
+# 首頁：電影列表
+# -------------------------
 @app.route("/")
 def movies():
     db = get_db()
-    movies = db.execute("""
-        SELECT 
-            m.id,
-            m.title,
-            m.showtime,
-            m.poster_url,
-            m.total_seats,
-            IFNULL(SUM(b.tickets), 0) as booked_seats,
-            (m.total_seats - IFNULL(SUM(b.tickets), 0)) as remaining_seats
-        FROM movies m
-        LEFT JOIN bookings b ON m.id = b.movie_id
-        GROUP BY m.id
-    """).fetchall()
 
-    # 將 sqlite3.Row 轉成 dict，才能操作
+    # 取得所有電影
+    movies = db.execute("SELECT * FROM movies").fetchall()
     movies = [dict(m) for m in movies]
 
-    if movies:
-        # 找剩餘座位最少
-        min_remaining = min(m['remaining_seats'] for m in movies)
-        for m in movies:
-            m['is_top1'] = (m['remaining_seats'] == min_remaining)
+    # 取得所有場次和剩餘座位
+    showtimes = db.execute("""
+        SELECT 
+            s.id AS showtime_id,
+            s.movie_id,
+            s.time AS showtime,
+            s.total_seats,
+            IFNULL(SUM(b.tickets),0) AS booked_seats,
+            (s.total_seats - IFNULL(SUM(b.tickets),0)) AS remaining_seats
+        FROM showtimes s
+        LEFT JOIN bookings b ON s.id = b.showtime_id
+        GROUP BY s.id
+    """).fetchall()
+    showtimes = [dict(s) for s in showtimes]
 
-        # 排序，把 TOP1 放第一個
-        movies.sort(key=lambda x: x['is_top1'], reverse=True)
+    # 將場次依電影分組
+    movie_showtimes_map = {}
+    for st in showtimes:
+        movie_id = st['movie_id']
+        if movie_id not in movie_showtimes_map:
+            movie_showtimes_map[movie_id] = []
+        movie_showtimes_map[movie_id].append(st)
 
-    return render_template("movies.html", movies=movies, full_name=session.get("full_name"))
+    # 每部電影加上總剩餘座位、首頁展示用的時間
+    for movie in movies:
+        m_id = movie['id']
+        sts = movie_showtimes_map.get(m_id, [])
+        movie['showtimes'] = sts                     # 方便訂票頁面用
+        movie['total_remaining_seats'] = sum(st['remaining_seats'] for st in sts)
+        movie['showtime'] = sts[0]['showtime'] if sts else '尚無場次'
+        # 標記是否已售完
+        movie['sold_out'] = (movie['total_remaining_seats'] == 0)
+
+
+    return render_template(
+        "movies.html",
+        movies=movies,
+        full_name=session.get("full_name"),
+        username=session.get("username"),
+        employee_id=session.get("employee_id")
+    )
+
+# -------------------------
+# 訂票頁
+# -------------------------
 
 @app.route("/book/<int:movie_id>", methods=["GET", "POST"])
 def book(movie_id):
-    # 🚨 先檢查是否登入
     if "user_id" not in session:
         return redirect(url_for("login"))
 
     db = get_db()
-
-    # 取得電影資訊和剩餘座位
-    movie = db.execute("""
-        SELECT 
-            m.*,
-            m.total_seats,
-            IFNULL(SUM(b.tickets), 0) AS booked_seats,
-            (m.total_seats - IFNULL(SUM(b.tickets), 0)) AS remaining_seats
-        FROM movies m
-        LEFT JOIN bookings b ON m.id = b.movie_id
-        WHERE m.id = ?
-        GROUP BY m.id
-    """, (movie_id,)).fetchone()
-
+    movie = db.execute("SELECT * FROM movies WHERE id=?", (movie_id,)).fetchone()
     if not movie:
         return "電影不存在", 404
 
+    showtimes = db.execute("""
+        SELECT 
+            s.id AS showtime_id,
+            s.weekday,
+            s.time AS showtime,
+            s.total_seats,
+            COALESCE(SUM(b.tickets),0) AS booked_seats,
+            s.total_seats - COALESCE(SUM(b.tickets),0) AS remaining_seats
+        FROM showtimes s
+        LEFT JOIN bookings b ON s.id = b.showtime_id
+        WHERE s.movie_id=?
+        GROUP BY s.id, s.weekday, s.time, s.total_seats
+    """, (movie_id,)).fetchall()
+
+    showtimes = [dict(s) for s in showtimes]
+
+    # ✅ 依星期 + 時間排序
+    weekday_order = {"一":1, "二":2, "三":3, "四":4, "五":5, "六":6, "日":7}
+    showtimes.sort(key=lambda st: (weekday_order.get(st['weekday'], 8), st['showtime']))
+
     if request.method == "POST":
-        name = request.form["name"]
-        tickets = int(request.form["tickets"])
+        selected_showtime_id = int(request.form.get("showtime_id"))
+        tickets = int(request.form.get("tickets"))
+        name = session.get("username")
         order_no = generate_unique_order_no(db)
 
-        # 🔹 檢查剩餘座位
-        if tickets > movie["remaining_seats"]:
-            return f"剩餘座位不足，剩餘 {movie['remaining_seats']} 席", 400
+        st = next((s for s in showtimes if s["showtime_id"] == selected_showtime_id), None)
+        if not st:
+            return "場次不存在", 404
 
-        # 新增訂單
+        if tickets > st["remaining_seats"]:
+            return f"剩餘座位不足，剩餘 {st['remaining_seats']} 席", 400
+
         db.execute("""
-            INSERT INTO bookings (order_no, movie_id, customer_name, tickets)
+            INSERT INTO bookings (order_no, showtime_id, customer_name, tickets)
             VALUES (?, ?, ?, ?)
-        """, (order_no, movie_id, name, tickets))
+        """, (order_no, selected_showtime_id, name, tickets))
         db.commit()
 
         return redirect(url_for("success", order_no=order_no))
 
-    # GET 顯示訂票頁
-    return render_template("book.html", movie=movie)
+    return render_template(
+        "book.html",
+        movie=movie,
+        showtimes=showtimes
+    )
 
+
+
+
+# -------------------------
+# 註冊頁
+# -------------------------
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
@@ -244,215 +321,153 @@ def register():
         password = request.form.get("password", "").strip()
         full_name = request.form.get("full_name", "").strip()
         phone = request.form.get("phone", "").strip()
-
-        # 後端驗證姓名
         if full_name.isdigit() or len(full_name) == 0:
             return "姓名不能全為數字，請輸入正確姓名", 400
-
-        # 後端驗證電話
-        if not phone.isdigit():
-            return "電話只能包含數字", 400
-        if len(phone) < 8 or len(phone) > 15:
-            return "電話長度需介於 8~15 位數", 400
-
+        if not phone.isdigit() or len(phone)<8 or len(phone)>15:
+            return "電話格式錯誤", 400
         db = get_db()
-        exists = db.execute("SELECT * FROM users WHERE username=?", (username,)).fetchone()
-        if exists:
+        if db.execute("SELECT * FROM users WHERE username=?", (username,)).fetchone():
             return "帳號已存在", 400
-
-        # 存入資料庫
-        db.execute(
-            "INSERT INTO users (username, password, full_name, phone) VALUES (?, ?, ?, ?)",
-            (username, password, full_name, phone)
-        )
+        db.execute("INSERT INTO users (username, password, full_name, phone) VALUES (?, ?, ?, ?)",
+                   (username, password, full_name, phone))
         db.commit()
-
-        # ===== 註冊成功直接登入 =====
         user = db.execute("SELECT * FROM users WHERE username=?", (username,)).fetchone()
         session["user_id"] = user["id"]
         session["username"] = user["username"]
         session["full_name"] = user["full_name"]
-
-        # 導向電影列表頁
         return redirect(url_for("movies"))
-
     return render_template("register.html")
 
+# -------------------------
+# 訂票成功頁
+# -------------------------
 @app.route("/success/<order_no>")
 def success(order_no):
     return render_template("success.html", order_no=order_no)
 
+# -------------------------
+# 訂單查詢
+# -------------------------
 
 @app.route("/order", methods=["GET", "POST"])
-def query_order():
+def order():
     db = get_db()
-    user_name = session.get("username")
     results = []
-    searched = False  # 標記是否已查詢過
+    searched = False
 
-    if request.method == "POST":
-        searched = True  # 表示使用者提交查詢
-        order_no = request.form.get("order_no")
-
+    # 未登入：透過訂單編號查詢
+    if request.method == "POST" and not session.get("username"):
+        order_no = request.form.get("order_no", "").strip()
+        searched = True
         if order_no:
-            if user_name:
-                results = db.execute("""
-                    SELECT b.order_no, b.customer_name, b.tickets, m.title, m.showtime
-                    FROM bookings b
-                    JOIN movies m ON b.movie_id = m.id
-                    WHERE b.order_no=? AND b.customer_name=?
-                """, (order_no, user_name)).fetchall()
-            else:
-                results = db.execute("""
-                    SELECT b.order_no, b.customer_name, b.tickets, m.title, m.showtime
-                    FROM bookings b
-                    JOIN movies m ON b.movie_id = m.id
-                    WHERE b.order_no=?
-                """, (order_no,)).fetchall()
-        else:
-            if user_name:
-                results = db.execute("""
-                    SELECT b.order_no, b.customer_name, b.tickets, m.title, m.showtime
-                    FROM bookings b
-                    JOIN movies m ON b.movie_id = m.id
-                    WHERE b.customer_name=?
-                """, (user_name,)).fetchall()
-            # 未登入且未輸入訂單號 → 不顯示任何資料
+            results = db.execute("""
+                SELECT o.order_no, o.customer_name, o.tickets, m.title, s.time AS showtime
+                FROM bookings o
+                JOIN showtimes s ON o.showtime_id = s.id
+                JOIN movies m ON s.movie_id = m.id
+                WHERE o.order_no = ?
+            """, (order_no,)).fetchall()
+            results = [dict(r) for r in results]
 
-    elif user_name:
-        # GET 請求 → 登入者自動查自己所有訂單
+            # 計算星期
+            for r in results:
+                dt = datetime.strptime(r['showtime'], "%H:%M")
+                r['weekday'] = ["一","二","三","四","五","六","日"][dt.weekday()]
+
+    # 已登入：顯示該使用者所有訂單
+    elif session.get("username"):
+        user_name = session.get("username")
         results = db.execute("""
-            SELECT b.order_no, b.customer_name, b.tickets, m.title, m.showtime
-            FROM bookings b
-            JOIN movies m ON b.movie_id = m.id
-            WHERE b.customer_name=?
+            SELECT o.order_no, o.customer_name, o.tickets, m.title, s.time AS showtime
+            FROM bookings o
+            JOIN showtimes s ON o.showtime_id = s.id
+            JOIN movies m ON s.movie_id = m.id
+            WHERE o.customer_name = ?
         """, (user_name,)).fetchall()
+        results = [dict(r) for r in results]
 
-    return render_template("order.html", results=results, user_name=user_name, searched=searched)
+        # 計算星期
+        for r in results:
+            dt = datetime.strptime(r['showtime'], "%H:%M")
+            r['weekday'] = ["一","二","三","四","五","六","日"][dt.weekday()]
+
+    return render_template("order.html", results=results, searched=searched)
 
 
 
 
-from flask import jsonify, request
+
+
+
+
+
+
+# -------------------------
+# 刪除訂單
+# -------------------------
 @app.route("/delete_order/<order_no>", methods=["POST"])
 def delete_order(order_no):
     db = get_db()
-
-    # 登入用戶刪自己訂單
     user_name = session.get("username")
     if user_name:
-        cur = db.execute(
-            "DELETE FROM bookings WHERE order_no=? AND customer_name=?",
-            (order_no, user_name)
-        )
+        cur = db.execute("DELETE FROM bookings WHERE order_no=? AND customer_name=?", (order_no, user_name))
     else:
-        # 未登入用戶直接刪除指定訂單編號
-        cur = db.execute(
-            "DELETE FROM bookings WHERE order_no=?",
-            (order_no,)
-        )
-
+        cur = db.execute("DELETE FROM bookings WHERE order_no=?", (order_no,))
     db.commit()
-
     if cur.rowcount == 0:
         return jsonify({"success": False, "message": "查無訂單"})
-
     return jsonify({"success": True})
 
-
-
 # -------------------------
-#  員工登入
+# 員工登入與電影管理
 # -------------------------
-
 @app.route("/employee_login", methods=["GET", "POST"])
 def employee_login():
     error = None
-
     if request.method == "POST":
         username = request.form.get("username")
         password = request.form.get("password")
-
         db = get_db()
-        employee = db.execute(
-            "SELECT * FROM employees WHERE username=? AND password=?",
-            (username, password)
-        ).fetchone()
-
+        employee = db.execute("SELECT * FROM employees WHERE username=? AND password=?", (username, password)).fetchone()
         if employee:
             session["employee_id"] = employee["id"]
             session["employee_username"] = employee["username"]
             return redirect(url_for("manage_movies"))
         else:
             error = "帳號或密碼錯誤"
-
     return render_template("employee_login.html", error=error)
-
 
 @app.route("/manage_movies", methods=["GET", "POST"])
 def manage_movies():
-    # 先檢查是否登入員工
     if "employee_id" not in session:
         return redirect(url_for("employee_login"))
-
     db = get_db()
-
-    # 新增電影
     if request.method == "POST":
         title = request.form.get("title", "").strip()
-        showtime = request.form.get("showtime", "").strip()
-        poster_file = request.form.get("poster_url", "").strip()  # 使用者只輸入檔名
+        poster_file = request.form.get("poster_url", "").strip()
         total_seats = request.form.get("total_seats", "").strip()
-        # 移除多餘的路徑，只保留檔名
         poster_file = poster_file.split("/")[-1] if poster_file else ""
-
         poster_url = f"posters/{poster_file}" if poster_file else None
-
-        total_seats = request.form.get("total_seats", "").strip()
-   
-        # 如果 total_seats 沒填或非數字，給預設值 250
         try:
             total_seats = int(total_seats)
             if total_seats <= 0:
                 total_seats = 250
         except ValueError:
             total_seats = 250
-
-        if title and showtime:
-            # 如果有輸入檔名，組成完整路徑；沒填就 None
-            poster_url = f"posters/{poster_file}" if poster_file else None
-
-            db.execute(
-                "INSERT INTO movies (title, showtime, poster_url, total_seats) VALUES (?, ?, ?, ?)",
-                (title, showtime, poster_url, total_seats)
-            )
+        if title:
+            db.execute("INSERT INTO movies (title, poster_url, total_seats) VALUES (?, ?, ?)", (title, poster_url, total_seats))
             db.commit()
-
-    # 取得所有電影
     movies = db.execute("SELECT * FROM movies").fetchall()
-
-    return render_template(
-        "manage_movies.html",
-        movies=movies,
-        employee_name=session.get("employee_username")
-    )
+    return render_template("manage_movies.html", movies=movies, employee_name=session.get("employee_username"))
 
 @app.route("/delete_movie/<int:movie_id>", methods=["POST"])
 def delete_movie(movie_id):
     if "employee_id" not in session:
         return redirect(url_for("employee_login"))
-
     db = get_db()
     db.execute("DELETE FROM movies WHERE id=?", (movie_id,))
     db.commit()
-
     return redirect(url_for("manage_movies"))
-
-
-
-
-
-
 
 # -------------------------
 # 主程式

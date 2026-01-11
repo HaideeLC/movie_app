@@ -62,14 +62,14 @@ body::before {
 
 /* ===== 卡片樣式 ===== */
 .movie-card {
-    position: relative; /* 為了 badge 定位 */
+    position: relative;
     background: rgba(255, 255, 255, 0.15);
     backdrop-filter: blur(6px);
     border-radius: 15px;
     overflow: hidden;
     box-shadow: 0 8px 20px rgba(0,0,0,0.3);
     transition: transform 0.3s, box-shadow 0.3s;
-    cursor: pointer;
+    cursor: default;
 }
 .movie-card:hover {
     transform: translateY(-5px);
@@ -169,7 +169,6 @@ form.inline {
         <h3 style="color:white;">新增電影（員工）</h3>
         <form method="post" action="/manage_movies">
             <input type="text" name="title" placeholder="電影名稱" required>
-            <input type="text" name="showtime" placeholder="放映時間" required>
             <input type="text" name="poster_url" placeholder="static/posters/xxx.jpg">
             <button type="submit" class="add-btn">新增</button>
         </form>
@@ -178,59 +177,56 @@ form.inline {
 
     <!-- 電影卡片牆 -->
     <div class="movie-grid">
-        {% for movie in movies %}
-        <div class="movie-card">
+    {% for movie in movies %}
+    <div class="movie-card">
 
-            {% if movie.is_top1 %}
-            <div class="top1-badge">TOP1</div>
-            {% endif %}
+        {% if movie.is_top1 %}
+        <div class="top1-badge">TOP1</div>
+        {% endif %}
 
-            <!-- 海報圖片 -->
-            {% if session.username and movie.remaining_seats > 0 %}
-                <a href="/book/{{ movie.id }}">
-                    {% if movie.poster_url %}
-                        <img src="{{ url_for('static', filename=movie.poster_url) }}">
-                    {% else %}
-                        <img src="https://via.placeholder.com/300x400?text=No+Image">
-                    {% endif %}
-                </a>
+        <!-- 海報圖片 -->
+        {% if session.username and movie.total_remaining_seats > 0 %}
+            <a href="/book/{{ movie.id }}">
+        {% endif %}
+        {% if movie.poster_url %}
+            <img src="{{ url_for('static', filename=movie.poster_url) }}">
+        {% else %}
+            <img src="https://via.placeholder.com/300x400?text=No+Image">
+        {% endif %}
+        {% if session.username and movie.total_remaining_seats > 0 %}
+            </a>
+        {% endif %}
+
+        <div class="movie-content">
+            <div class="movie-title">{{ movie.title }}</div>
+
+            <!-- 訂票邏輯 -->
+            {% if not session.username %}
+                <!-- 未登入 -->
+                <div class="disabled" style="color:#f87171; font-weight:bold;">預購票，請先登入</div>
             {% else %}
-                {% if movie.poster_url %}
-                    <img src="{{ url_for('static', filename=movie.poster_url) }}">
+                {% if movie.total_remaining_seats > 0 %}
+                    <!-- 有剩餘座位 -->
+                    <form method="get" action="/book/{{ movie.id }}" class="inline">
+                        <button class="book-btn">訂票</button>
+                    </form>
                 {% else %}
-                    <img src="https://via.placeholder.com/300x400?text=No+Image">
+                    <!-- 已售完 -->
+                    <button class="book-btn" disabled style="background:#ccc; cursor:not-allowed;">已售完</button>
                 {% endif %}
             {% endif %}
 
-            <!-- 文字區塊在圖片下方 -->
-            <div class="movie-content">
-                <div class="movie-title">{{ movie.title }}</div>
-                <div class="movie-info">🕒 {{ movie.showtime }}</div>
-                <div class="movie-info">🎟 剩餘 {{ movie.remaining_seats }} 位</div>
-
-                {% if session.username %}
-                    {% if movie.remaining_seats > 0 %}
-                        <form method="get" action="/book/{{ movie.id }}" class="inline">
-                            <button class="book-btn">訂票</button>
-                        </form>
-                    {% else %}
-                        <button class="book-btn" disabled>已售完</button>
-                    {% endif %}
-                {% else %}
-                    <div class="disabled">請先登入</div>
-                {% endif %}
-
-                {% if session.employee_id %}
-                    <form method="post" action="/delete_movie/{{ movie.id }}" class="inline"
-                          onsubmit="return confirm('確定刪除這部電影嗎？');">
-                        <button class="delete-btn">刪除</button>
-                    </form>
-                {% endif %}
-            </div>
+            <!-- 員工刪除電影 -->
+            {% if session.employee_id %}
+                <form method="post" action="/delete_movie/{{ movie.id }}" class="inline"
+                    onsubmit="return confirm('確定刪除這部電影嗎？');">
+                    <button class="delete-btn">刪除</button>
+                </form>
+            {% endif %}
         </div>
-        {% endfor %}
     </div>
-
+    {% endfor %}
+    </div>
 </div>
 
 </body>

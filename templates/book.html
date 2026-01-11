@@ -1,178 +1,209 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-    <meta charset="UTF-8">
-    <title>訂票 - {{ movie.title }}</title>
+<meta charset="UTF-8">
+<title>訂票 - {{ movie.title }}</title>
+<style>
+body {
+    margin:0;
+    font-family:"Segoe UI", Arial,sans-serif;
+    background:linear-gradient(135deg,#1f2937,#111827);
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:flex-start;
+    padding:40px 0;
+    color:#111;
+}
 
-    <style>
-        body {
-            margin: 0;
-            font-family: "Segoe UI", Arial, sans-serif;
-            background: linear-gradient(135deg, #1f2937, #111827);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            color: #111;
-        }
+/* 容器 */
+.booking-container {
+    background:#fff;
+    width:900px;
+    max-width:95%;
+    display:flex;
+    border-radius:12px;
+    overflow:hidden;
+    box-shadow:0 20px 40px rgba(0,0,0,0.4);
+}
 
-        .booking-container {
-            background: #ffffff;
-            width: 900px;
-            max-width: 95%;
-            display: flex;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-        }
+/* 左側：海報 + 場次列表 */
+.left-panel {
+    width:40%;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    background-color:#000;
+    color:white;
+}
+.left-panel img {
+    width:100%;
+    object-fit:cover;
+    border-bottom:1px solid rgba(255,255,255,0.1);
+}
+.movie-title {
+    margin:15px 0 10px;
+    font-size:24px;
+    text-align:center;
+}
+.showtimes-list {
+    width:90%;
+    background-color:rgba(255,255,255,0.05);
+    border-radius:8px;
+    padding:10px;
+    margin-bottom:20px;
+}
+.showtimes-list h3 {
+    margin:0 0 10px;
+    font-size:16px;
+    text-align:center;
+}
+.showtimes-list ul {
+    list-style:none;
+    padding:0;
+    margin:0;
+}
+.showtimes-list li {
+    margin:4px 0;
+    font-size:14px;
+    text-align:center;
+}
 
-        .movie-info {
-            width: 40%;
-            background-color: #000;
-            color: white;
-            position: relative;
-        }
+/* 右側：訂票表單 */
+.booking-form {
+    width:60%;
+    padding:40px;
+    display:flex;
+    flex-direction:column;
+}
+.booking-form h2 {
+    margin-top:0;
+    margin-bottom:20px;
+}
+.error-box {
+    display:none;
+    background-color:#fee2e2;
+    color:#b91c1c;
+    border:1px solid #fca5a5;
+    padding:10px;
+    border-radius:6px;
+    margin-bottom:15px;
+    font-size:14px;
+}
+.form-group {
+    margin-bottom:20px;
+}
+.form-group label {
+    display:block;
+    font-weight:bold;
+    margin-bottom:6px;
+}
+.form-group input, .form-group select {
+    width:100%;
+    padding:10px;
+    border-radius:6px;
+    border:1px solid #ccc;
+    font-size:15px;
+}
+.form-group input[readonly] {
+    background-color:#f3f4f6;
+}
+.submit-btn {
+    width:100%;
+    padding:12px;
+    font-size:16px;
+    border:none;
+    border-radius:8px;
+    background-color:#16a34a;
+    color:white;
+    cursor:pointer;
+}
+.submit-btn[disabled] {
+    background-color:#ccc;
+    cursor:not-allowed;
+}
+.back-link {
+    display:block;
+    text-align:center;
+    margin-top:15px;
+    text-decoration:none;
+    color:#2563eb;
+}
 
-        .movie-info img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            opacity: 0.8;
-        }
-
-        .movie-overlay {
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(to top, rgba(0,0,0,0.85), rgba(0,0,0,0.2));
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-end;
-        }
-
-        .movie-overlay h1 {
-            margin: 0;
-            font-size: 28px;
-        }
-
-        .movie-overlay p {
-            margin: 5px 0 0;
-            font-size: 14px;
-            opacity: 0.9;
-        }
-
-        .booking-form {
-            width: 60%;
-            padding: 40px;
-        }
-
-        .booking-form h2 {
-            margin-top: 0;
-            margin-bottom: 20px;
-        }
-
-        .error-box {
-            display: none;
-            background-color: #fee2e2;
-            color: #b91c1c;
-            border: 1px solid #fca5a5;
-            padding: 10px;
-            border-radius: 6px;
-            margin-bottom: 15px;
-            font-size: 14px;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            font-weight: bold;
-            margin-bottom: 6px;
-        }
-
-        .form-group input {
-            width: 100%;
-            padding: 10px;
-            border-radius: 6px;
-            border: 1px solid #ccc;
-            font-size: 15px;
-        }
-
-        .form-group input[readonly] {
-            background-color: #f3f4f6;
-        }
-
-        .submit-btn {
-            width: 100%;
-            padding: 12px;
-            font-size: 16px;
-            border: none;
-            border-radius: 8px;
-            background-color: #16a34a;
-            color: white;
-            cursor: pointer;
-        }
-
-        .submit-btn:hover {
-            background-color: #15803d;
-        }
-
-        .back-link {
-            display: block;
-            text-align: center;
-            margin-top: 15px;
-            text-decoration: none;
-            color: #2563eb;
-        }
-    </style>
+/* 響應式 */
+@media (max-width: 800px) {
+    .booking-container { flex-direction:column; }
+    .left-panel, .booking-form { width:100%; }
+}
+</style>
 </head>
 
 <body>
-
 <div class="booking-container">
 
-    <!-- 左：電影資訊 -->
-    <div class="movie-info">
+    <!-- 左側：海報 + 所有場次 -->
+    <div class="left-panel">
         {% if movie.poster_url %}
             <img src="{{ url_for('static', filename=movie.poster_url) }}">
         {% else %}
             <img src="https://via.placeholder.com/400x600?text=No+Image">
         {% endif %}
+        <div class="movie-title">{{ movie.title }}</div>
 
-        <div class="movie-overlay">
-            <h1>{{ movie.title }}</h1>
-            <p>🕒 放映時間：{{ movie.showtime }}</p>
+        {% if showtimes %}
+        <div class="showtimes-list">
+            <h3>📅 所有場次</h3>
+            <ul>
+            {% for st in showtimes %}
+                <li>
+                    {{ st.weekday }} {{ st.showtime }}
+                    {% if st.remaining_seats == 0 %}
+                        （已售完）
+                    {% else %}
+                        （剩餘 {{ st.remaining_seats }} 席）
+                    {% endif %}
+                </li>
+            {% endfor %}
+            </ul>
         </div>
+        {% endif %}
     </div>
 
-    <!-- 右：訂票表單 -->
+    <!-- 右側：訂票表單 -->
     <div class="booking-form">
         <h2>確認訂票資訊</h2>
-
         <div id="errorBox" class="error-box"></div>
 
+        {% set available_showtimes = showtimes|selectattr("remaining_seats", "gt", 0)|list %}
+        {% if available_showtimes %}
         <form method="post" id="bookingForm">
             <div class="form-group">
                 <label>姓名</label>
-                <input type="text" name="name" value="{{ session.username }}" readonly>
+                <input type="text" name="name" value="{{ session.get('username', '') }}" readonly>
+            </div>
+
+            <div class="form-group">
+                <label>選擇場次</label>
+                <select name="showtime_id" id="showtimeSelect" required>
+                    {% for st in available_showtimes %}
+                        <option value="{{ st.showtime_id }}">
+                            {{ st.weekday }} {{ st.showtime }}（剩餘 {{ st.remaining_seats }} 席）
+                        </option>
+                    {% endfor %}
+                </select>
             </div>
 
             <div class="form-group">
                 <label>購買張數</label>
-                <input
-                    type="number"
-                    id="tickets"
-                    name="tickets"
-                    min="1"
-                    step="1"
-                    required
-                >
+                <input type="number" id="tickets" name="tickets" min="1" value="1" step="1" required>
             </div>
 
             <button type="submit" class="submit-btn">🎟 確認訂票</button>
         </form>
+        {% else %}
+            <div class="error-box" style="display:block;">❌ 所有場次已售完</div>
+            <button class="submit-btn" disabled>已售完</button>
+        {% endif %}
 
         <a href="/" class="back-link">← 返回電影列表</a>
     </div>
@@ -182,37 +213,52 @@
 <script>
 const form = document.getElementById("bookingForm");
 const ticketsInput = document.getElementById("tickets");
+const showtimeSelect = document.getElementById("showtimeSelect");
 const errorBox = document.getElementById("errorBox");
 
-form.addEventListener("submit", function (e) {
-    e.preventDefault();
-    errorBox.style.display = "none";
+// 每個場次的剩餘座位
+const remainingSeatsMap = {
+    {% for st in available_showtimes %}
+        "{{ st.showtime_id }}": {{ st.remaining_seats }},
+    {% endfor %}
+};
 
-    const tickets = ticketsInput.value;
+if(form){
+    form.addEventListener("submit", function (e) {
+        e.preventDefault();
+        errorBox.style.display = "none";
 
-    // 🔒 前端數字檢查
-    if (!tickets || !Number.isInteger(Number(tickets)) || Number(tickets) < 1) {
-        errorBox.innerText = "請輸入大於 0 的整數張數";
-        errorBox.style.display = "block";
-        return;
-    }
+        const tickets = Number(ticketsInput.value);
+        const selectedShowtimeId = showtimeSelect.value;
+        const remainingSeats = remainingSeatsMap[selectedShowtimeId] || 0;
 
-    // ✅ 通過才送後端
-    fetch(window.location.pathname, {
-        method: "POST",
-        body: new FormData(form)
-    })
-    .then(async res => {
-        if (!res.ok) {
-            const msg = await res.text();
-            errorBox.innerText = msg;
+        if (!Number.isInteger(tickets) || tickets < 1) {
+            errorBox.innerText = "請輸入正確的購票張數";
             errorBox.style.display = "block";
             return;
         }
 
-        window.location.href = "/order";
+        if (tickets > remainingSeats) {
+            errorBox.innerText = `剩餘座位只有 ${remainingSeats} 席`;
+            errorBox.style.display = "block";
+            return;
+        }
+
+        fetch(window.location.pathname, {
+            method: "POST",
+            body: new FormData(form)
+        })
+        .then(async res => {
+            if (!res.ok) {
+                const msg = await res.text();
+                errorBox.innerText = msg;
+                errorBox.style.display = "block";
+                return;
+            }
+            window.location.href = "/order";
+        });
     });
-});
+}
 </script>
 
 </body>
