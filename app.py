@@ -53,7 +53,7 @@ def init_db():
             title TEXT NOT NULL,
             showtime TEXT NOT NULL,
             poster_url TEXT,
-            total_seats INTEGER DEFAULT 100
+            total_seats INTEGER DEFAULT 250
         )
     """)
 
@@ -126,21 +126,29 @@ def login():
         password = request.form.get("password", "").strip()
 
         db = get_db()
-        user = db.execute("SELECT * FROM users WHERE username=? AND password=?", (username, password)).fetchone()
+        # 查詢時同時拿到 full_name
+        user = db.execute(
+            "SELECT * FROM users WHERE username=? AND password=?", 
+            (username, password)
+        ).fetchone()
+
         if not user:
             return "帳號或密碼錯誤", 400
 
-        # 登入成功
-        session["username"] = user["username"]
+        # 登入成功，把帳號、id、姓名存進 session
         session["user_id"] = user["id"]
+        session["username"] = user["username"]      # 可保留
+        session["full_name"] = user["full_name"]    # 新增姓名
+
         return "", 200
 
     return render_template("login.html")
 
+
 @app.route("/logout")
 def logout():
     session.clear()
-    return redirect(url_for("login"))
+    return redirect(url_for("movies"))
 
 @app.route("/")
 def movies():
@@ -337,6 +345,7 @@ def employee_login():
 
 @app.route("/manage_movies", methods=["GET", "POST"])
 def manage_movies():
+    # 先檢查是否登入員工
     if "employee_id" not in session:
         return redirect(url_for("employee_login"))
 
@@ -344,21 +353,42 @@ def manage_movies():
 
     # 新增電影
     if request.method == "POST":
-        title = request.form.get("title")
-        showtime = request.form.get("showtime")
+        title = request.form.get("title", "").strip()
+        showtime = request.form.get("showtime", "").strip()
+        poster_file = request.form.get("poster_url", "").strip()  # 使用者只輸入檔名
+        total_seats = request.form.get("total_seats", "").strip()
+        # 移除多餘的路徑，只保留檔名
+        poster_file = poster_file.split("/")[-1] if poster_file else ""
+
+        poster_url = f"posters/{poster_file}" if poster_file else None
+
+        total_seats = request.form.get("total_seats", "").strip()
+   
+        # 如果 total_seats 沒填或非數字，給預設值 250
+        try:
+            total_seats = int(total_seats)
+            if total_seats <= 0:
+                total_seats = 250
+        except ValueError:
+            total_seats = 250
+
         if title and showtime:
+            # 如果有輸入檔名，組成完整路徑；沒填就 None
+            poster_url = f"posters/{poster_file}" if poster_file else None
+
             db.execute(
-                "INSERT INTO movies (title, showtime) VALUES (?, ?)",
-                (title, showtime)
+                "INSERT INTO movies (title, showtime, poster_url, total_seats) VALUES (?, ?, ?, ?)",
+                (title, showtime, poster_url, total_seats)
             )
             db.commit()
 
+    # 取得所有電影
     movies = db.execute("SELECT * FROM movies").fetchall()
 
     return render_template(
         "manage_movies.html",
         movies=movies,
-        employee_name=session["employee_username"]
+        employee_name=session.get("employee_username")
     )
 
 @app.route("/delete_movie/<int:movie_id>", methods=["POST"])

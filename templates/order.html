@@ -1,141 +1,167 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-    <meta charset="UTF-8">
-    <title>訂單查詢</title>
+<meta charset="UTF-8">
+<title>訂單查詢</title>
+<style>
+body {
+    margin: 0;
+    font-family: "Segoe UI", Arial, sans-serif;
+    min-height: 100vh;
+    background: url('https://images.unsplash.com/photo-1524985069026-dd778a71c7b4?auto=format&fit=crop&w=1470&q=80') no-repeat center center fixed;
+    background-size: cover;
+    color: white;
+}
 
-    <style>
-        body {
-            margin: 0;
-            font-family: "Segoe UI", Arial, sans-serif;
-            background-color: #f4f6f8;
-        }
+/* 模糊背景層 */
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: inherit;
+    filter: blur(12px) brightness(0.5);
+    z-index: -1;
+}
 
-        .container {
-            max-width: 1100px;
-            margin: 40px auto;
-            padding: 0 20px;
-        }
+.container {
+    position: relative;
+    z-index: 1;
+    max-width: 1200px;
+    margin: 40px auto;
+    padding: 20px;
+    background: rgba(0,0,0,0.5);
+    border-radius: 12px;
+}
 
-        h1 {
-            margin-bottom: 10px;
-        }
+/* 導覽列 */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+.navbar a, .navbar span {
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
+    margin-left: 15px;
+}
+.navbar a:hover {
+    text-decoration: underline;
+}
 
-        .info {
-            color: #555;
-            margin-bottom: 20px;
-        }
+/* 查詢區 */
+.search-card {
+    background: rgba(255,255,255,0.1);
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 30px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.search-card input {
+    padding: 8px;
+    flex: 1;
+    border-radius: 6px;
+    border: none;
+}
+.search-card button {
+    padding: 8px 14px;
+    border: none;
+    border-radius: 6px;
+    background-color: #2563eb;
+    color: white;
+    cursor: pointer;
+}
 
-        /* 查詢卡片 */
-        .search-card {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            margin-bottom: 30px;
-        }
+/* 訂單表格 */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    border-radius: 10px;
+    overflow: hidden;
+}
+th {
+    background-color: rgba(31,41,55,0.9);
+    color: white;
+    padding: 12px;
+    font-size: 14px;
+}
+td {
+    padding: 10px;
+    text-align: center;
+    border-bottom: 1px solid rgba(255,255,255,0.2);
+}
+tr:hover {
+    background-color: rgba(255,255,255,0.1);
+}
+.delete-btn {
+    background-color: #dc2626;
+    color: white;
+    border: none;
+    padding: 6px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+.delete-btn:hover {
+    background-color: #b91c1c;
+}
+.no-result {
+    color: #f87171;
+    font-weight: bold;
+    margin-top: 20px;
+}
 
-        .search-card input {
-            padding: 8px;
-            width: 250px;
-            border-radius: 6px;
-            border: 1px solid #ccc;
-        }
-
-        .search-card button {
-            padding: 8px 14px;
-            border: none;
-            border-radius: 6px;
-            background-color: #2563eb;
-            color: white;
-            cursor: pointer;
-            margin-left: 5px;
-        }
-
-        /* 表格 */
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background: white;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-        }
-
-        th {
-            background-color: #1f2937;
-            color: white;
-            padding: 12px;
-            font-size: 14px;
-        }
-
-        td {
-            padding: 10px;
-            text-align: center;
-            border-bottom: 1px solid #eee;
-        }
-
-        tr:hover {
-            background-color: #f9fafb;
-        }
-
-        .delete-btn {
-            background-color: #dc2626;
-            color: white;
-            border: none;
-            padding: 6px 10px;
-            border-radius: 6px;
-            cursor: pointer;
-        }
-
-        .delete-btn:hover {
-            background-color: #b91c1c;
-        }
-
-        .no-result {
-            color: #dc2626;
-            font-weight: bold;
-            margin-top: 20px;
-        }
-
-        .back-link {
-            display: inline-block;
-            margin-top: 25px;
-            padding: 10px 16px;
-            background-color: #16a34a;
-            color: white;
-            text-decoration: none;
-            border-radius: 8px;
-        }
-
-        .back-link:hover {
-            background-color: #15803d;
-        }
-    </style>
+/* 返回按鈕 */
+.back-link {
+    display: inline-block;
+    margin-top: 25px;
+    padding: 10px 16px;
+    background-color: #16a34a;
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+}
+.back-link:hover {
+    background-color: #15803d;
+}
+</style>
 </head>
-
 <body>
 
 <div class="container">
 
-    <h1>🔍 訂單查詢</h1>
+    <!-- 導覽列 -->
+    <div class="navbar">
+        <div>
+            <a href="/">🎬 電影列表</a>
+            
+        </div>
+        <div>
+            {% if session.full_name %}
+                您好，{{ session.full_name }} | <a href="/logout">登出</a>
+            {% else %}
+                <a href="/register">註冊</a>
+                <a href="/login">登入</a>
+            {% endif %}
+        </div>
+    </div>
 
-    {% if user_name %}
-        <p class="info">使用者：<strong>{{ user_name }}</strong>（已登入，可查看所有訂單）</p>
-    {% else %}
-        <p class="info">未登入，請輸入訂單編號查詢您的訂單</p>
-    {% endif %}
+    
 
+    <!-- 只有未登入才顯示查詢框 -->
+    {% if not session.full_name %}
     <div class="search-card">
-        <form method="post">
-            訂單編號（選填）：
-            <input type="text" name="order_no" placeholder="請輸入訂單編號">
+        <form method="post" style="width: 100%; display: flex;">
+            <input type="text" name="order_no" placeholder="請輸入訂單編號（選填）">
             <button type="submit">查詢</button>
         </form>
     </div>
+    {% endif %}
 
+    <!-- 訂單結果 -->
     {% if results %}
-        <h2>查詢結果</h2>
         <table>
             <tr>
                 <th>訂單編號</th>
@@ -143,7 +169,7 @@
                 <th>電影</th>
                 <th>場次</th>
                 <th>票數</th>
-                <th>操作</th>
+                <th>訂單狀態</th>
             </tr>
             {% for r in results %}
             <tr>
@@ -153,9 +179,8 @@
                 <td>{{ r.showtime }}</td>
                 <td>{{ r.tickets }}</td>
                 <td>
-                    <form method="post" action="/delete_order/{{ r.order_no }}"
-                          onsubmit="return confirm('確定要刪除這筆訂單嗎？');">
-                        <button type="submit" class="delete-btn">刪除</button>
+                    <form method="post" action="/delete_order/{{ r.order_no }}" onsubmit="return confirm('確定要取消這筆訂單嗎？');">
+                        <button type="submit" class="delete-btn">取消</button>
                     </form>
                 </td>
             </tr>
@@ -164,8 +189,6 @@
     {% elif searched %}
         <p class="no-result">❌ 查無此訂單</p>
     {% endif %}
-
-    <a href="/" class="back-link">⬅ 返回電影列表</a>
 
 </div>
 

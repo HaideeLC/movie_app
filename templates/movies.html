@@ -143,8 +143,8 @@ form.inline {
     <div class="navbar">
         <div>🎬 電影訂票系統</div>
         <div>
-            {% if session.username %}
-                你好，{{ session.username }}
+            {% if session.full_name %}
+                你好，{{ session.full_name }}
                 <a href="/order">📄 訂單</a>
                 <a href="/logout">登出</a>
             {% else %}

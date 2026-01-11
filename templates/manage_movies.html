@@ -61,17 +61,7 @@ body::before {
     background-color: #b91c1c;
 }
 
-/* 表格 */
-table { border-collapse: collapse; width: 100%; margin-top: 20px; }
-th, td { border: 1px solid #ccc; padding: 8px; text-align: center; background: rgba(255,255,255,0.1); }
-img { width: 80px; height: 120px; object-fit: cover; border-radius: 4px; }
-button { padding: 4px 8px; border: none; border-radius: 4px; cursor: pointer; }
-.book-btn { background-color: #16a34a; color: white; }
-.delete-btn { background-color: #dc2626; color: white; }
-.add-btn { background-color: #2563eb; color: white; margin-top: 10px; }
-
 /* 新增表單 */
-form.inline { display: inline; }
 .add-movie-form input {
     margin-bottom: 8px;
     padding: 6px;
@@ -79,6 +69,49 @@ form.inline { display: inline; }
     border: none;
     width: calc(100% - 12px);
 }
+.add-btn {
+    background-color: #2563eb;
+    color: white;
+    margin-top: 10px;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    border: none;
+}
+.add-btn:hover {
+    background-color: #1d4ed8;
+}
+
+/* 表格 */
+table {
+    border-collapse: collapse;
+    width: 100%;
+    margin-top: 20px;
+}
+th, td {
+    border: 1px solid #ccc;
+    padding: 8px;
+    text-align: center;
+    background: rgba(255,255,255,0.1);
+}
+img {
+    width: 80px;
+    height: 120px;
+    object-fit: cover;
+    border-radius: 4px;
+}
+button.delete-btn {
+    background-color: #dc2626;
+    color: white;
+    padding: 4px 8px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+button.delete-btn:hover {
+    background-color: #b91c1c;
+}
+form.inline { display: inline; }
 </style>
 </head>
 <body>
@@ -96,11 +129,11 @@ form.inline { display: inline; }
     <!-- 新增電影表單 -->
     <div class="add-movie-form">
         <h3>新增電影</h3>
-        <form method="post" action="/manage_movies">
+        <form method="post" action="{{ url_for('manage_movies') }}">
             <input type="text" name="title" placeholder="電影名稱" required><br>
             <input type="text" name="showtime" placeholder="放映時間" required><br>
-            <input type="text" name="poster_url" placeholder="海報 URL (可空白)"><br>
-            <input type="number" name="total_seats" placeholder="座位數 (預設100)" min="1"><br>
+            <input type="text" name="poster_url" placeholder="海報檔名 (放在 static/posters/ 目錄)"><br>
+            <input type="number" name="total_seats" placeholder="座位數 (預設250)" min="1"><br>
             <button type="submit" class="add-btn">新增電影</button>
         </form>
     </div>
@@ -122,7 +155,7 @@ form.inline { display: inline; }
                 <td>{{ m.title }}</td>
                 <td>
                     {% if m.poster_url %}
-                        <img src="{{ m.poster_url }}" alt="{{ m.title }}">
+                        <img src="{{ url_for('static', filename=m.poster_url) }}" alt="{{ m.title }}">
                     {% else %}
                         <img src="https://via.placeholder.com/80x120?text=No+Image" alt="No Image">
                     {% endif %}
@@ -130,7 +163,7 @@ form.inline { display: inline; }
                 <td>{{ m.showtime }}</td>
                 <td>{{ m.total_seats }}</td>
                 <td>
-                    <form method="post" action="/delete_movie/{{ m.id }}" class="inline"
+                    <form method="post" action="{{ url_for('delete_movie', movie_id=m.id) }}" class="inline"
                           onsubmit="return confirm('確定刪除這部電影嗎？');">
                         <button class="delete-btn">刪除</button>
                     </form>
