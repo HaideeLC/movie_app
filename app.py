@@ -89,6 +89,15 @@ def init_db():
             "INSERT INTO movies (title, showtime,poster_url,total_seats) VALUES (?, ?,?,?)",
             ("天劫倒數", "21:00","posters/天劫倒數.png",150)
         )
+        db.execute(
+            "INSERT INTO movies (title, showtime,poster_url,total_seats) VALUES (?, ?,?,?)",
+            ("氣象戰", "12:00","posters/氣象戰.png",180)
+        )
+        db.execute(
+            "INSERT INTO movies (title, showtime,poster_url,total_seats) VALUES (?, ?,?,?)",
+            ("塔羅牌", "21:00","posters/塔羅牌.png",230)
+        )
+        
 
     # 預設使用者
     if db.execute("SELECT COUNT(*) FROM users").fetchone()[0] == 0:
@@ -150,6 +159,8 @@ def logout():
     session.clear()
     return redirect(url_for("movies"))
 
+
+
 @app.route("/")
 def movies():
     db = get_db()
@@ -166,10 +177,21 @@ def movies():
         LEFT JOIN bookings b ON m.id = b.movie_id
         GROUP BY m.id
     """).fetchall()
-    
-    return render_template("movies.html", movies=movies)
 
-@app.route("/book/<int:movie_id>", methods=["GET", "POST"])
+    # 將 sqlite3.Row 轉成 dict，才能操作
+    movies = [dict(m) for m in movies]
+
+    if movies:
+        # 找剩餘座位最少
+        min_remaining = min(m['remaining_seats'] for m in movies)
+        for m in movies:
+            m['is_top1'] = (m['remaining_seats'] == min_remaining)
+
+        # 排序，把 TOP1 放第一個
+        movies.sort(key=lambda x: x['is_top1'], reverse=True)
+
+    return render_template("movies.html", movies=movies, full_name=session.get("full_name"))
+
 @app.route("/book/<int:movie_id>", methods=["GET", "POST"])
 def book(movie_id):
     # 🚨 先檢查是否登入
@@ -230,7 +252,6 @@ def register():
         # 後端驗證電話
         if not phone.isdigit():
             return "電話只能包含數字", 400
-        
         if len(phone) < 8 or len(phone) > 15:
             return "電話長度需介於 8~15 位數", 400
 
@@ -239,13 +260,21 @@ def register():
         if exists:
             return "帳號已存在", 400
 
+        # 存入資料庫
         db.execute(
             "INSERT INTO users (username, password, full_name, phone) VALUES (?, ?, ?, ?)",
             (username, password, full_name, phone)
         )
         db.commit()
 
-        return "", 200
+        # ===== 註冊成功直接登入 =====
+        user = db.execute("SELECT * FROM users WHERE username=?", (username,)).fetchone()
+        session["user_id"] = user["id"]
+        session["username"] = user["username"]
+        session["full_name"] = user["full_name"]
+
+        # 導向電影列表頁
+        return redirect(url_for("movies"))
 
     return render_template("register.html")
 
@@ -304,17 +333,34 @@ def query_order():
 
 
 
+from flask import jsonify, request
 @app.route("/delete_order/<order_no>", methods=["POST"])
 def delete_order(order_no):
-    user_name = session.get("username")
-    if not user_name:
-        return redirect(url_for("login"))
-
     db = get_db()
-    # 確保使用者只能刪自己訂單
-    db.execute("DELETE FROM bookings WHERE order_no=? AND customer_name=?", (order_no, user_name))
+
+    # 登入用戶刪自己訂單
+    user_name = session.get("username")
+    if user_name:
+        cur = db.execute(
+            "DELETE FROM bookings WHERE order_no=? AND customer_name=?",
+            (order_no, user_name)
+        )
+    else:
+        # 未登入用戶直接刪除指定訂單編號
+        cur = db.execute(
+            "DELETE FROM bookings WHERE order_no=?",
+            (order_no,)
+        )
+
     db.commit()
-    return redirect(url_for("query_order"))
+
+    if cur.rowcount == 0:
+        return jsonify({"success": False, "message": "查無訂單"})
+
+    return jsonify({"success": True})
+
+
+
 # -------------------------
 #  員工登入
 # -------------------------

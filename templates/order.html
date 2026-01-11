@@ -12,8 +12,6 @@ body {
     background-size: cover;
     color: white;
 }
-
-/* 模糊背景層 */
 body::before {
     content: "";
     position: fixed;
@@ -22,7 +20,6 @@ body::before {
     filter: blur(12px) brightness(0.5);
     z-index: -1;
 }
-
 .container {
     position: relative;
     z-index: 1;
@@ -32,100 +29,48 @@ body::before {
     background: rgba(0,0,0,0.5);
     border-radius: 12px;
 }
-
-/* 導覽列 */
-.navbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-}
-.navbar a, .navbar span {
-    color: white;
-    text-decoration: none;
-    font-weight: bold;
-    margin-left: 15px;
-}
-.navbar a:hover {
-    text-decoration: underline;
-}
-
-/* 查詢區 */
+.navbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.navbar a, .navbar span { color: white; text-decoration: none; font-weight: bold; margin-left: 15px; }
+.navbar a:hover { text-decoration: underline; }
 .search-card {
-    background: rgba(255,255,255,0.1);
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(6px);
     padding: 20px;
-    border-radius: 10px;
+    border-radius: 12px;
     margin-bottom: 30px;
     display: flex;
+    justify-content: center;
     align-items: center;
-    gap: 10px;
 }
-.search-card input {
-    padding: 8px;
+.search-input {
     flex: 1;
-    border-radius: 6px;
+    padding: 12px 16px;
+    border-radius: 8px 0 0 8px;
     border: none;
-}
-.search-card button {
-    padding: 8px 14px;
-    border: none;
-    border-radius: 6px;
-    background-color: #2563eb;
+    font-size: 16px;
+    outline: none;
+    background-color: rgba(255,255,255,0.2);
     color: white;
+}
+.search-input::placeholder { color: #e0e0e0; }
+.search-btn {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 0 8px 8px 0;
+    background: #2563eb;
+    color: white;
+    font-size: 16px;
     cursor: pointer;
 }
-
-/* 訂單表格 */
-table {
-    width: 100%;
-    border-collapse: collapse;
-    border-radius: 10px;
-    overflow: hidden;
-}
-th {
-    background-color: rgba(31,41,55,0.9);
-    color: white;
-    padding: 12px;
-    font-size: 14px;
-}
-td {
-    padding: 10px;
-    text-align: center;
-    border-bottom: 1px solid rgba(255,255,255,0.2);
-}
-tr:hover {
-    background-color: rgba(255,255,255,0.1);
-}
-.delete-btn {
-    background-color: #dc2626;
-    color: white;
-    border: none;
-    padding: 6px 10px;
-    border-radius: 6px;
-    cursor: pointer;
-}
-.delete-btn:hover {
-    background-color: #b91c1c;
-}
-.no-result {
-    color: #f87171;
-    font-weight: bold;
-    margin-top: 20px;
-}
-
-/* 返回按鈕 */
-.back-link {
-    display: inline-block;
-    margin-top: 25px;
-    padding: 10px 16px;
-    background-color: #16a34a;
-    color: white;
-    text-decoration: none;
-    border-radius: 8px;
-}
-.back-link:hover {
-    background-color: #15803d;
-}
+.search-btn:hover { background: #1e40af; }
+table { width: 100%; border-collapse: collapse; border-radius: 10px; overflow: hidden; }
+th { background-color: rgba(31,41,55,0.9); color: white; padding: 12px; font-size: 14px; }
+td { padding: 10px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.2); }
+tr:hover { background-color: rgba(255,255,255,0.1); }
+.delete-btn { background-color: #dc2626; color: white; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; }
+.delete-btn:hover { background-color: #b91c1c; }
+.no-result { color: #f87171; font-weight: bold; margin-top: 20px; text-align: center; }
+.success-msg { color: #34d399; font-weight: bold; margin-top: 20px; text-align: center; }
 </style>
 </head>
 <body>
@@ -134,10 +79,7 @@ tr:hover {
 
     <!-- 導覽列 -->
     <div class="navbar">
-        <div>
-            <a href="/">🎬 電影列表</a>
-            
-        </div>
+        <div><a href="/">🎬 電影列表</a></div>
         <div>
             {% if session.full_name %}
                 您好，{{ session.full_name }} | <a href="/logout">登出</a>
@@ -148,49 +90,104 @@ tr:hover {
         </div>
     </div>
 
-    
-
-    <!-- 只有未登入才顯示查詢框 -->
+    <!-- 查詢區：未登入才顯示 -->
     {% if not session.full_name %}
     <div class="search-card">
-        <form method="post" style="width: 100%; display: flex;">
-            <input type="text" name="order_no" placeholder="請輸入訂單編號（選填）">
-            <button type="submit">查詢</button>
+        <form id="search-form" method="post" style="width: 100%; display: flex; align-items: center;">
+            <input type="text" name="order_no" placeholder="請輸入訂單編號" class="search-input" required>
+            <button type="submit" class="search-btn">🔍 查詢</button>
         </form>
     </div>
     {% endif %}
 
     <!-- 訂單結果 -->
-    {% if results %}
-        <table>
-            <tr>
-                <th>訂單編號</th>
-                <th>訂購人</th>
-                <th>電影</th>
-                <th>場次</th>
-                <th>票數</th>
-                <th>訂單狀態</th>
-            </tr>
-            {% for r in results %}
-            <tr>
-                <td>{{ r.order_no }}</td>
-                <td>{{ r.customer_name }}</td>
-                <td>{{ r.title }}</td>
-                <td>{{ r.showtime }}</td>
-                <td>{{ r.tickets }}</td>
-                <td>
-                    <form method="post" action="/delete_order/{{ r.order_no }}" onsubmit="return confirm('確定要取消這筆訂單嗎？');">
-                        <button type="submit" class="delete-btn">取消</button>
-                    </form>
-                </td>
-            </tr>
-            {% endfor %}
-        </table>
-    {% elif searched %}
-        <p class="no-result">❌ 查無此訂單</p>
-    {% endif %}
+    <div id="order-results">
+        {% if results is defined %}
+            {% if results|length > 0 %}
+                <table>
+                    <tr>
+                        <th>訂單編號</th>
+                        <th>訂購人</th>
+                        <th>電影</th>
+                        <th>場次</th>
+                        <th>票數</th>
+                        <th>操作</th>
+                    </tr>
+                    {% for r in results %}
+                    <tr>
+                        <td>{{ r.order_no }}</td>
+                        <td>{{ r.customer_name }}</td>
+                        <td>{{ r.title }}</td>
+                        <td>{{ r.showtime }}</td>
+                        <td>{{ r.tickets }}</td>
+                        <td>
+                            <form class="delete-form" data-order-no="{{ r.order_no }}">
+                                <button type="button" class="delete-btn">取消</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            {% else %}
+                {% if session.full_name %}
+                    <p class="no-result">📭 尚無訂單</p>
+                {% else %}
+                    {% if searched %}
+                        <p class="no-result">❌ 查無此訂單</p>
+                    {% endif %}
+                {% endif %}
+            {% endif %}
+        {% endif %}
+    </div>
 
 </div>
+
+<script>
+// AJAX 刪除訂單
+document.querySelectorAll(".delete-form").forEach(form => {
+    const btn = form.querySelector(".delete-btn");
+    btn.addEventListener("click", async () => {
+        const orderNo = form.dataset.orderNo;
+        if(!confirm("確定要取消這筆訂單嗎？")) return;
+
+        const res = await fetch(`/delete_order/${orderNo}`, { method: "POST" });
+        const data = await res.json();
+
+        if(data.success){
+            const row = form.closest("tr");
+            row.remove();
+
+            // 判斷刪除後 table 是否還有資料（排除表頭）
+            const table = document.querySelector("#order-results table");
+            if(table){
+                const rows = table.querySelectorAll("tr");
+                if(rows.length <= 1){ // 只有表頭
+                    table.style.display = "none";
+                    
+                    // 顯示刪除成功訊息
+                    const msg = document.createElement("p");
+                    msg.textContent = "✅ 刪除成功";
+                    msg.className = "success-msg";
+
+                    // 移除舊訊息
+                    const oldMsg = document.querySelector("#order-results .success-msg");
+                    if(oldMsg) oldMsg.remove();
+
+                    document.getElementById("order-results").appendChild(msg);
+                }
+            } else {
+                // 如果 table 已不存在，顯示刪除成功
+                const msg = document.createElement("p");
+                msg.textContent = "✅ 刪除成功";
+                msg.className = "success-msg";
+                document.getElementById("order-results").appendChild(msg);
+            }
+        } else {
+            alert("錯誤：" + data.message);
+        }
+    });
+});
+</script>
 
 </body>
 </html>

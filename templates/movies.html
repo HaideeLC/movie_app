@@ -12,7 +12,6 @@ body {
     background: url('https://images.unsplash.com/photo-1524985069026-dd778a71c7b4?auto=format&fit=crop&w=1470&q=80') no-repeat center center fixed;
     background-size: cover;
 }
-
 body::before {
     content: "";
     position: fixed;
@@ -43,13 +42,11 @@ body::before {
     align-items: center;
     border-radius: 8px;
 }
-
 .navbar a {
     color: #e5e7eb;
     margin-left: 15px;
     text-decoration: none;
 }
-
 .navbar a:hover {
     color: white;
     text-decoration: underline;
@@ -65,6 +62,7 @@ body::before {
 
 /* ===== 卡片樣式 ===== */
 .movie-card {
+    position: relative; /* 為了 badge 定位 */
     background: rgba(255, 255, 255, 0.15);
     backdrop-filter: blur(6px);
     border-radius: 15px;
@@ -73,10 +71,23 @@ body::before {
     transition: transform 0.3s, box-shadow 0.3s;
     cursor: pointer;
 }
-
 .movie-card:hover {
     transform: translateY(-5px);
     box-shadow: 0 12px 30px rgba(0,0,0,0.4);
+}
+
+/* ===== TOP1 標籤 ===== */
+.top1-badge {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background-color: #dc2626;
+    color: white;
+    padding: 4px 8px;
+    font-size: 14px;
+    font-weight: bold;
+    border-radius: 6px;
+    z-index: 2;
 }
 
 /* ===== 海報 ===== */
@@ -86,7 +97,6 @@ body::before {
     object-fit: cover;
     transition: transform 0.3s;
 }
-
 .movie-card:hover img {
     transform: scale(1.05);
 }
@@ -97,13 +107,11 @@ body::before {
     text-align: center;
     color: white;
 }
-
 .movie-title {
     font-size: 18px;
     font-weight: bold;
     margin-bottom: 6px;
 }
-
 .movie-info {
     font-size: 14px;
     opacity: 0.85;
@@ -119,7 +127,6 @@ button {
     cursor: pointer;
     margin: 3px;
 }
-
 .book-btn { background-color: #16a34a; }
 .book-btn[disabled] { background-color: gray; cursor: not-allowed; }
 .delete-btn { background-color: #dc2626; }
@@ -174,7 +181,11 @@ form.inline {
         {% for movie in movies %}
         <div class="movie-card">
 
-            <!-- 可點擊進入訂票 -->
+            {% if movie.is_top1 %}
+            <div class="top1-badge">TOP1</div>
+            {% endif %}
+
+            <!-- 海報圖片 -->
             {% if session.username and movie.remaining_seats > 0 %}
                 <a href="/book/{{ movie.id }}">
                     {% if movie.poster_url %}
